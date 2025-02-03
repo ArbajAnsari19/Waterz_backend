@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(bodyParser.json());
 
 const corsOptions = {
-  origin: "https://waterz-customer-frontend.onrender.com/",/// Your frontend URL 
+  origin: "https://waterz-customer-frontend.onrender.com",/// Your frontend URL 
   credentials: true, // Allow credentials
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed methods
   allowedHeaders: ['Content-Type', 'Authorization'] // Allowed headers
