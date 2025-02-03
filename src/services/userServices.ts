@@ -555,6 +555,101 @@ class AdminService {
       throw new Error("Error listing users: " + (error as Error).message);
     }
   }
+
+   static async getAllOwners(): Promise<IOwner[]> {
+    try {
+      return await Owner.find();
+    } catch (error) {
+      throw new Error("Error listing owners: " + (error as Error).message);
+    }
+  }
+
+  static async getAllCustomers(): Promise<IUser[]> {
+    try {
+      return await User.find();
+    } catch (error) {
+      throw new Error("Error listing customers: " + (error as Error).message);
+    }
+  }
+
+  static async getAllBookings(): Promise<IBooking[]> {
+    try {
+      return await Booking.find();
+    } catch (error) {
+      throw new Error("Error listing bookings: " + (error as Error).message);
+    }
+  }
+
+  static async getAllQueries(): Promise<IUser[]> {
+    try {
+      return await User.find();
+    } catch (error) {
+      throw new Error("Error listing queries: " + (error as Error).message);
+    }
+  }
+
+  static async getAllPayments(): Promise<IUser[]> {
+    try {
+      return await User.find();
+    } catch (error) {
+      throw new Error("Error listing payments: " + (error as Error).message);
+    }
+  }
+
+  static async getAllSuperAgents(): Promise<IUser[]> {
+    try {
+      return await User.find();
+    } catch (error) {
+      throw new Error("Error listing super agents: " + (error as Error).message);
+    }
+  }
+
+  static async getAllAgents(): Promise<IUser[]> {
+    try {
+      return await User.find();
+    } catch (error) {
+      throw new Error("Error listing agents: " + (error as Error).message);
+    }
+  }
+
+  static async getAllAdmins(): Promise<IAdmin[]> {
+    try {
+      return await Admin.find();
+    } catch (error) {
+      throw new Error("Error listing admins: " + (error as Error).message);
+    }
+  }
+
+  static async getAdminById(adminId: string): Promise<IAdmin | null> {
+    try {
+      return await Admin.findById(adminId);
+    } catch (error) {
+      throw new Error("Error getting admin: " + (error as Error).message);
+    }
+  }
+
+  static async getYatchsOwner(YatchId: string): Promise<IOwner | null> {
+    try {
+      const YachtDetail  = await Yacht.findById(YatchId);
+      if (!YachtDetail) {
+        throw new Error("Yacht not found");
+      }
+      const OwnerDetail = await Owner.findById(YachtDetail.owner);
+      return OwnerDetail;
+    } catch (error) {
+      throw new Error("Error getting owner: " + (error as Error).message);
+    }
+  }
+
+  static async getAllBookingByOwner(ownerId: string): Promise<IBooking[]> {
+    try {
+      const bookings = await Booking.find({ owner: ownerId });
+      return bookings;
+    } catch (error) {
+      throw new Error("Error getting bookings: " + (error as Error).message);
+    }
+  }
+
 }
 export { UserprofileService, AdminService };
 export default UserService;

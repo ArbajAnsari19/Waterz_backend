@@ -170,6 +170,7 @@ export class userController {
 
 
 export class adminController{
+
     static async getAllYatchs(req: Request, res: Response): Promise<void> {
         try {
             const yatchs = await AdminService.getAllYatchs();
@@ -178,4 +179,88 @@ export class adminController{
             res.status(500).json({ message: (error as Error).message });
         }
     }
+
+    static async getAllOwners(req: Request, res: Response): Promise<void> {
+        try {
+            const owners = await AdminService.getAllOwners();
+            res.status(200).json({ owners });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async getAllAgents(req: Request, res: Response): Promise<void> {
+        try {
+            const agents = await AdminService.getAllAgents();
+            res.status(200).json({ agents });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async getAllSuperAgents(req: Request, res: Response): Promise<void> {
+        try {
+            const superAgents = await AdminService.getAllSuperAgents();
+            res.status(200).json({ superAgents });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async getAllCustomers(req: Request, res: Response): Promise<void> {
+        try {
+            const customers = await AdminService.getAllCustomers();
+            res.status(200).json({ customers });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async getAllBookings(req: Request, res: Response): Promise<void> {
+        try {
+            const bookings = await AdminService.getAllBookings();
+            res.status(200).json({ bookings });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async getAllPayments(req: Request, res: Response): Promise<void> {
+        try {
+            const payments = await AdminService.getAllPayments();
+            res.status(200).json({ payments });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async getAllQueries(req: Request, res: Response): Promise<void> {
+        try {
+            const queries = await AdminService.getAllQueries();
+            res.status(200).json({ queries });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async getYatchOwner(req: Request, res: Response): Promise<void> {
+        try {
+            const yatchId = req.body.yatchId;
+            const yatchs = await AdminService.getYatchsOwner(yatchId);
+            res.status(200).json({ yatchs });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async getAllBookingByOwner(req: Request, res: Response): Promise<void> {
+        try {
+            const ownerId = req.body.ownerId;
+            const bookings = await AdminService.getAllBookingByOwner(ownerId);
+            res.status(200).json({ bookings });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+    
 }
