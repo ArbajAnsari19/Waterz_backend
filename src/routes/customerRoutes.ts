@@ -11,7 +11,7 @@ router.get("/prev/rides", authenticateToken,authenticateUser,userController.cust
 router.get("/rides/:id", authenticateToken,authenticateUser,userController.customerPrevRidesId)
 router.get("/yatch-detail/:id",authenticateToken,authenticateUser, YatchController.detailYatch);
 router.get("/listAll",authenticateToken,authenticateUser, YatchController.listAll);
-router.get("/topYatch",authenticateToken,authenticateUser,YatchController.topYatch);
+router.get("/topYatch",YatchController.topYatch);
 router.post("/findNearby", YatchController.findNearbyYachts);
 
 export default router;
