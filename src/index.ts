@@ -11,9 +11,14 @@ dotenv.config()
 const app = express();
 app.use(express.json());
 app.use(bodyParser.json());
-
+const allowedOrigins = [
+  'http://wavezgoa.com',
+  'https://wavezgoa.com',
+  'http://www.wavezgoa.com',
+  'https://www.wavezgoa.com',
+];
 const corsOptions = {
-  origin: "https://waterz-customer-frontend.onrender.com",/// Your frontend URL 
+  origin: allowedOrigins,
   credentials: true, // Allow credentials
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed methods
   allowedHeaders: ['Content-Type', 'Authorization'] // Allowed headers
