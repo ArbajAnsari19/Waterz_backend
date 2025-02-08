@@ -264,8 +264,6 @@ class UserprofileService{
       // Get bookings based on filters
       const bookings = await Booking.find(query)
         .sort({ createdAt: -1 })
-        .populate("userId", "name email phone")
-        .populate("agentId", "name email phone");
 
       return bookings;
     } catch (error) {

@@ -12,6 +12,7 @@ const app = express();
 app.use(express.json());
 app.use(bodyParser.json());
 const allowedOrigins = [
+  'http://localhost:5173',
   'http://wavezgoa.com',
   'https://wavezgoa.com',
   'http://www.wavezgoa.com',
@@ -56,9 +57,7 @@ const connectDatabase = async () => {
   }
 };
 
-
 connectDatabase();
-
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
