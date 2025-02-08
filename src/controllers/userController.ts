@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
-import { UserprofileService } from '../services/userServices';
-import { AdminService } from '../services/userServices';
+import { UserprofileService, AdminService, Filter } from '../services/userServices';
 
 export class userController {
 
@@ -157,7 +156,31 @@ export class userController {
             res.status(500).json({ message: (error as Error).message });
         }
     }
-    
+
+    static async deleteAgent(req: Request, res: Response): Promise<void> {
+        try {
+            const agentId = req.params.id;
+            const user = await UserprofileService.deleteAgent(agentId);
+            res.status(200).json({ message: 'Agent Deleted' });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async listFilteredAgent(req: Request, res: Response): Promise<void> {
+        try {
+             const userId = req.currentUser.id;
+            const filter : Filter = {
+                status:req.body.status,
+                agentWise:req.body.agent,
+            } 
+            const allAgents = await UserprofileService.listFilteredAgent(userId,filter);
+            res.status(200).json({ allAgents });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
     // static paymentDetail = async (req: Request, res: Response): Promise<void> => {
     //     try {
     //         const paymentDetails = await UserprofileService.paymentDetail(req.currentUser.id);
@@ -165,7 +188,7 @@ export class userController {
     //     } catch (error) {
     //         res.status(500).json({ message: (error as Error).message });
     //     }
-    // }-
+    // }
 }
 
 

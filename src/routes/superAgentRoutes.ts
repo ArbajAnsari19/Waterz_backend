@@ -11,6 +11,8 @@ router.get("/list-All-Yatchs", authenticateToken, authenticateSuperAgent,YatchCo
 router.post("/create-refferal", authenticateToken, authenticateSuperAgent,userController.agentnRefferal);
 router.get("/list-all-agent", authenticateToken, authenticateSuperAgent,userController.listAllAgent);
 router.get("/agent-detail/:id", authenticateToken, authenticateSuperAgent,userController.AgentDetail);
+router.delete("/remove-agent/:id", authenticateToken, authenticateSuperAgent,userController.deleteAgent);
+router.post("/list-filtered-agent", authenticateToken, authenticateSuperAgent,userController.listFilteredAgent);
 // router.get("/payment-details", authenticateToken, authenticateSuperAgent,userController.paymentDetail);   
 
 export default router;

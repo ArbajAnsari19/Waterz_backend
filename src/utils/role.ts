@@ -1,4 +1,4 @@
-import  User, {  Agent, Owner }  from "../models/User";
+import  User, {  Agent, Owner, SuperAgent, Admin  }  from "../models/User";
 
 export function findRoleById(role: string) {
     switch (role) {
@@ -6,6 +6,10 @@ export function findRoleById(role: string) {
         return Agent;
       case 'owner':
         return Owner;
+      case 'super-agent':
+        return SuperAgent;
+      case 'admin':
+        return Admin;
       }
       return User;
   }

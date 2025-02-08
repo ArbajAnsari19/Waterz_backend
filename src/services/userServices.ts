@@ -17,9 +17,14 @@ export interface IUserAuthInfo {
   token: string;
 }
 
+export interface Filter {
+  status: "pending" | "completed"
+  agentWise: "All" | string
+}
+
 class UserprofileService{
 
-  // customer
+// customer
   static async meCustomer(userId: string): Promise<IBooking[] | null> {
     try {
       return await User.findById(userId);
@@ -191,15 +196,15 @@ class UserprofileService{
       }
   
       // Generate unique referral code if not exists
-      if (!superAgent.referralsCode) {
+      if (!superAgent.referralCode) {
         const referralCode = `${superAgent.name.substring(0, 3).toUpperCase()}-${Math.random().toString(36).substring(2, 8)}`;
-        superAgent.referralsCode = referralCode;
+        superAgent.referralCode = referralCode;
         await superAgent.save();
       }
   
       // Generate full referral URL
       const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      const referralUrl = `${baseUrl}/register?ref=${superAgent.referralsCode}`;
+      const referralUrl = `${baseUrl}/register?ref=${superAgent.referralCode}`;
   
       return referralUrl;
   
@@ -223,7 +228,51 @@ class UserprofileService{
     } catch (error) {
       throw new Error("Error getting user: " + (error as Error).message);
     }
-}
+  }
+
+  static async deleteAgent(agentId: string): Promise<IAgent | null> {
+    try {
+      return await Agent.findByIdAndDelete(agentId);
+    } catch (error) {
+      throw new Error("Error deleting agent: " + (error as Error).message);
+    }
+  }
+
+  static async listFilteredAgent(userId: string, filter: Filter): Promise<IBooking[]> {
+    try {
+      // Get all agents under this superAgent
+      const agents = await Agent.find({ superAgent: userId }).select('_id');
+      const agentIds = agents.map(agent => agent._id);
+
+      // Base query with agents filter
+      const query: any = {
+        agentId: { $in: agentIds }
+      };
+
+      // Add durationWise filter
+      if (filter.status === "pending") {
+        query.rideStatus = "pending";
+      } else if (filter.status === "completed") {
+        query.rideStatus = "completed";
+      }
+
+      // Add specific agent filter
+      if (filter.agentWise !== "All") {
+        query.agentId = filter.agentWise;
+      }
+
+      // Get bookings based on filters
+      const bookings = await Booking.find(query)
+        .sort({ createdAt: -1 })
+        .populate("userId", "name email phone")
+        .populate("agentId", "name email phone");
+
+      return bookings;
+    } catch (error) {
+      console.error("Error in listFilteredAgent:", error);
+      throw error;
+    }
+  }
 }
 
 class UserService {
@@ -287,7 +336,7 @@ class UserService {
     }
   }
 
-  static async createAgent(userData:IAgent, referralsCode?:string): Promise<IUserAuthInfo> {
+  static async createAgent(userData:IAgent, referralCode?:string): Promise<IUserAuthInfo> {
     try {
     // Check existing user
     const existingUser = await Agent.findOne({ email: userData.email });
@@ -295,15 +344,15 @@ class UserService {
       throw new Error("Agent already exists");
     }
     let superAgentId = null;
-    if (referralsCode) {
+    if (referralCode) {
       // Find and validate superAgent
-      const superagent = await SuperAgent.findOne({ referralCode: referralsCode });
+      const superagent = await SuperAgent.findOne({ referralCode: referralCode });
       if (!superagent) {
         throw new Error("Invalid referral code");
       }
       superAgentId = superagent._id;
     }
-
+    console.log("Super agent id is here : ", superAgentId);
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(userData.password, salt);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -320,6 +369,7 @@ class UserService {
       ...(superAgentId && { superAgent: superAgentId })
     });
           // Save agent
+    console.log("Agent is here : ", agent);
     const savedAgent = await agent.save();
 
     // Update superAgent's agents array if exists
@@ -342,6 +392,7 @@ class UserService {
 
   static async createSuperAgent(userData:ISuperAgent): Promise<IUserAuthInfo> {
     try {
+      console.log("userData", userData)
       const existingUser = await SuperAgent.findOne({ email: userData.email });
       if (existingUser) {
         throw new Error("User already exists");
@@ -351,16 +402,21 @@ class UserService {
       const hashedPassword = await bcrypt.hash(userData.password, salt);
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+      const referralCode = `${userData.name.substring(0, 3).toUpperCase()}-${Math.random().toString(36).substring(2, 8)}`;
+      console.log("referral code", referralCode)
       const superAgent = new SuperAgent({
         ...userData,
         password: hashedPassword,
         otp,
+        referralCode,
         otpExpiresAt,
         isVerified: false,
       });
-      const referralCode = `${superAgent.name.substring(0, 3).toUpperCase()}-${Math.random().toString(36).substring(2, 8)}`;
-      superAgent.referralsCode = referralCode;
+      console.log("superAgent", superAgent)
+      superAgent.referralCode = referralCode;
       const savedUser = await superAgent.save();
+      console.log("savedUser", savedUser)
+
       await this.sendOTPEmail(savedUser.email, otp);
       const token = this.generateOtpToken(savedUser._id.toString(), savedUser.email);
       return { user: savedUser.toObject(), token };

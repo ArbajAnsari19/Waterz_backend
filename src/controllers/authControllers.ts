@@ -32,8 +32,8 @@ export class AuthController {
 
   static async signUpAgent(req: Request, res: Response): Promise<void> {
     try {
-      const referralCode = req.body.referralCode;
-      const { token } = await UserService.createAgent(req.body);
+      const referralCode = req.params.referralCode;
+      const { token } = await UserService.createAgent(req.body,referralCode);
       res.status(201).json({
         message: "Signup successful! Please verify your email with the OTP sent.",
         redirect: 'verify-otp',
@@ -114,10 +114,14 @@ export class AuthController {
   static async verifyOTP(req: Request, res: Response): Promise<void> {
     try {
       const { otp, token, role } = req.body;
+      // console.log("role", role)
       const decoded = jwt.verify(token, process.env.OTP_JWT_SECRET as string) as { id: string };
-      const verified = await UserService.verifyOTP(decoded.id, otp,role);
+      // console.log("decoded", decoded)
+      const verified = await UserService.verifyOTP(decoded.id, otp, role);
+      // console.log("verified", verified)
       if (verified) {
         const user = await UserService.findUserById(decoded.id,role);
+        // console.log("user", user)
         const authToken = UserService.generateToken(decoded.id, user!.email, user!.role);
         res.status(200).json({ 
           message: 'OTP verified successfully',
