@@ -109,6 +109,7 @@ class PaymentService {
     // Send email notifications
     await PaymentService.sendEmailNotification(user!.email, booking);
     await PaymentService.sendEmailNotification(owner!.email, booking);
+
   }
 
   static async createCalendarEvent(user: any, owner: any, booking: any): Promise<void> {
@@ -181,7 +182,7 @@ class PaymentService {
       title: 'Special Event',
       event: `${new Date(booking.startDate).toLocaleDateString()} ${new Date(booking.startTime).toLocaleTimeString()}`,
       sailingTime: `${booking.sailingTime} hrs`,
-      stillTime: `${booking.stillTime} hrs`,
+      anchorage: `${booking.anchorage} hrs`,
       yachtType: booking.YachtType,
       noOfPeople: booking.PeopleNo,
       paymentStatus: booking.paymentStatus,

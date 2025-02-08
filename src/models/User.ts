@@ -28,8 +28,8 @@ export interface IAgent extends IUser {
 }
 
 export interface ISuperAgent extends IAgent {
-  agents?: mongoose.Types.ObjectId[] | IAgent[];
-  referralsCode: string;
+  agents: mongoose.Types.ObjectId[] | IAgent[];
+  referralCode: string;
 }
 
 export interface IAdmin {

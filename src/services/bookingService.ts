@@ -4,6 +4,7 @@ import Booking, {BookingAgent,IBookingAgent} from "../models/Booking";
 import Owner from "../models/User";
 import User,{ Agent } from "../models/User";
 import Razorpay from "razorpay";
+import { TRIP_COMBINATIONS } from "../utils/trip";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || (() => { throw new Error("RAZORPAY_KEY_ID is not defined"); })(),
@@ -14,19 +15,19 @@ class BookingService {
 
   static async createBooking(BookingDetails: Partial<IBooking>): Promise<{booking: IBooking, orderId: string }> {
     try {
-      const { startDate, startTime, duration, location, PeopleNo, sailingTime, stillTime, specialEvent, specialRequest, user, yacht } = BookingDetails;
-      // Calculate end date and time
-      const startDateTime = new Date(`${startDate}T${startTime}`);
-      if (duration === undefined) {
-        throw new Error("Duration is required");
-      }
-      const endDateTime = new Date(startDateTime.getTime() + duration * 60 * 60 * 1000); // duration in hours
-
-      // Check if the yacht exists and get its details
+      const { startDate, startTime, duration, location, tripType, timeOption, PeopleNo, sailingTime, anchorage, specialEvent, specialRequest, user, yacht } = BookingDetails;
       const yachtDetails = await Yacht.findById(yacht);
-      if (!yachtDetails) {
-        throw new Error("Yacht not found");
-      }
+      if (!yachtDetails) throw new Error("Yacht not found");
+  
+      const tripCombination = TRIP_COMBINATIONS.find(t => t.id === tripType);
+      if (!tripCombination) throw new Error("Invalid trip type");
+  
+      const selectedTime = tripCombination.options[timeOption || 0];
+      if (!selectedTime) throw new Error("Invalid time option");
+  
+      const startDateTime = new Date(startDate!);
+      const totalDuration = selectedTime.sailing + selectedTime.anchorage;
+      const endDateTime = new Date(startDateTime.getTime() + totalDuration * 60 * 60 * 1000);
 
       // Ensure PeopleNo <= capacity
 
@@ -50,25 +51,24 @@ class BookingService {
       }
 
       // Calculate the total amount
-      //@ts-ignore
-      const sailingCharge = yachtDetails.price.sailing * sailingTime;
-      //@ts-ignore
-      const stillCharge = yachtDetails.price.still * stillTime;
+      const sailingCharge = yachtDetails.price.sailing * selectedTime.sailing;
+      const stillCharge = yachtDetails.price.still * selectedTime.anchorage;
       const totalAmount = sailingCharge + stillCharge;
-
       // In BookingService.createBooking
         const booking = new Booking({
           ...BookingDetails,
           user,
           yacht,
+          tripType,
+          timeOption,
           bookingDateTime: new Date(),
           location,
           duration,
           startDate: startDateTime,
           startTime: startDateTime,
           endDate: endDateTime,
-          sailingTime,
-          stillTime,
+          sailingTime: selectedTime.sailing,
+          anchorage: selectedTime.anchorage,
           rideStatus: 'pending',  // Ensure this is explicitly set
           capacity: yachtDetails.capacity,
           PeopleNo,
@@ -106,12 +106,18 @@ class BookingService {
     try {
       const { startDate, startTime, duration, location, YachtType, capacity } = searchParams;
 
+      // Validate inputs
+      if (!startDate || !startTime || !duration) {
+        throw new Error("Start date, time and duration are required");
+      }
+
       // Calculate end date and time
       const startDateTime = new Date(`${startDate}T${startTime}`);
       if (duration === undefined) {
         throw new Error("Duration is required");
       }
-      const endDateTime = new Date(startDateTime.getTime() + duration * 60 * 60 * 1000); // duration in hours
+      const BUFFER_TIME = 30 * 60 * 1000; // 30 min buffer
+      const endDateTime = new Date(startDateTime.getTime() + (duration * 60 * 60 * 1000) + BUFFER_TIME);
 
       // Find yachts that match the search criteria
       const yachts = await Yacht.find({
@@ -140,13 +146,13 @@ class BookingService {
 
       return availableYachts;
     } catch (error) {
-      throw new Error((error as Error).message);
+      throw new Error(`Yacht search failed: ${(error as Error).message}`);
     }
   }
 
   static async createAgentBooking(BookingDetails: Partial<IBookingAgent>): Promise<{booking: IBookingAgent, orderId: string }> {
     try {
-      const { startDate, startTime, duration, location, PeopleNo, sailingTime, stillTime, specialEvent, specialRequest, user, yachts, noOfYatchs, customerEmail, customerName, customerPhone} = BookingDetails;
+      const { startDate, startTime, duration, location, PeopleNo, sailingTime, anchorage, specialEvent, specialRequest, user, yachts, noOfYatchs, customerEmail, customerName, customerPhone} = BookingDetails;
       // Check if the yachts exists and get its details
       if (!yachts) {
         throw new Error("Yachts are required");
@@ -196,7 +202,7 @@ class BookingService {
       //@ts-ignore
       const sailingCharge = yacht.price.sailing * sailingTime;
       //@ts-ignore
-      const stillCharge = yacht.price.still * stillTime;
+      const stillCharge = yacht.price.still * anchorage;
       return sum + sailingCharge + stillCharge;
     }, 0);
 
@@ -214,7 +220,7 @@ class BookingService {
         startTime: startDateTime,
         endDate: endDateTime,
         sailingTime,
-        stillTime,
+        anchorage,
         rideStatus: 'pending',
         capacity: totalCapacity,
         PeopleNo,

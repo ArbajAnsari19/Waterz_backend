@@ -4,14 +4,16 @@ export interface IBooking extends mongoose.Document {
   user: string;
   yacht: string;
   agent?: string;
-  bookingDate?: Date;
+  bookingDateTime?: Date;
   location: string;
+  tripType: string; 
+  timeOption: number;  
   duration: number;
   startDate: Date;
   startTime: Date;
   endDate: Date;
   sailingTime: number;
-  stillTime: number;
+  anchorage: number;
   YachtType: string;
   capacity: number;
   PeopleNo: number;
@@ -40,12 +42,14 @@ const bookingSchema = new mongoose.Schema({
   agent: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent', default: null }, // Optional agent
   bookingDate: { type: Date, required: false },
   location: { type: String, required: true },
+  tripType: { type: String, required: true },
+  timeOption: { type: Number, required: true },
   duration: { type: Number, required: true },
   startDate: { type: Date, required: true },
   startTime: { type: Date, required: true },
   endDate: { type: Date, required: true },
   sailingTime: { type: Number, required: true },
-  stillTime: { type: Number, required: true },
+  anchorage: { type: Number, required: true },
   YachtType: { type: String, required: false },
   capacity: { type: Number, required: true },
   razorpayOrderId: { type: String, required: true },

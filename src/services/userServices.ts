@@ -19,7 +19,7 @@ export interface IUserAuthInfo {
 
 class UserprofileService{
 
-  // customer
+// customer
   static async meCustomer(userId: string): Promise<IBooking[] | null> {
     try {
       return await User.findById(userId);
@@ -191,15 +191,15 @@ class UserprofileService{
       }
   
       // Generate unique referral code if not exists
-      if (!superAgent.referralsCode) {
+      if (!superAgent.referralCode) {
         const referralCode = `${superAgent.name.substring(0, 3).toUpperCase()}-${Math.random().toString(36).substring(2, 8)}`;
-        superAgent.referralsCode = referralCode;
+        superAgent.referralCode = referralCode;
         await superAgent.save();
       }
   
       // Generate full referral URL
       const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      const referralUrl = `${baseUrl}/register?ref=${superAgent.referralsCode}`;
+      const referralUrl = `${baseUrl}/register?ref=${superAgent.referralCode}`;
   
       return referralUrl;
   
@@ -287,7 +287,7 @@ class UserService {
     }
   }
 
-  static async createAgent(userData:IAgent, referralsCode?:string): Promise<IUserAuthInfo> {
+  static async createAgent(userData:IAgent, referralCode?:string): Promise<IUserAuthInfo> {
     try {
     // Check existing user
     const existingUser = await Agent.findOne({ email: userData.email });
@@ -295,15 +295,15 @@ class UserService {
       throw new Error("Agent already exists");
     }
     let superAgentId = null;
-    if (referralsCode) {
+    if (referralCode) {
       // Find and validate superAgent
-      const superagent = await SuperAgent.findOne({ referralCode: referralsCode });
+      const superagent = await SuperAgent.findOne({ referralCode: referralCode });
       if (!superagent) {
         throw new Error("Invalid referral code");
       }
       superAgentId = superagent._id;
     }
-
+    console.log("Super agent id is here : ", superAgentId);
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(userData.password, salt);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -320,6 +320,7 @@ class UserService {
       ...(superAgentId && { superAgent: superAgentId })
     });
           // Save agent
+    console.log("Agent is here : ", agent);
     const savedAgent = await agent.save();
 
     // Update superAgent's agents array if exists
@@ -363,9 +364,10 @@ class UserService {
         isVerified: false,
       });
       console.log("superAgent", superAgent)
-      superAgent.referralsCode = referralCode;
+      superAgent.referralCode = referralCode;
       const savedUser = await superAgent.save();
       console.log("savedUser", savedUser)
+
       await this.sendOTPEmail(savedUser.email, otp);
       const token = this.generateOtpToken(savedUser._id.toString(), savedUser.email);
       return { user: savedUser.toObject(), token };
