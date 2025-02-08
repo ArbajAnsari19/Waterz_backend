@@ -28,7 +28,7 @@ export interface IAgent extends IUser {
 }
 
 export interface ISuperAgent extends IAgent {
-  agents: mongoose.Types.ObjectId[] | IAgent[];
+  agents?: mongoose.Types.ObjectId[] | IAgent[];
   referralsCode: string;
 }
 
@@ -76,6 +76,7 @@ const ownerSchema = new mongoose.Schema({
 
 
 const agentSchema = new mongoose.Schema({
+  // Existing fields
   name: { type: String, required: true },
   email: { type: String, unique: true, required: true },
   password: { type: String, required: true },
@@ -89,9 +90,20 @@ const agentSchema = new mongoose.Schema({
   otp: { type: String, required: false },
   otpExpiresAt: { type: Date, required: false },
   isVerified: { type: Boolean, default: false },
-  commissionRate: { type: Number, required: false }, // Commission in percentage
-  superAgent: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }, // Managed by SuperAgent
+  commissionRate: { type: Number, required: false }, 
+  superAgent: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   createdAt: { type: Date, default: Date.now },
+  bookings: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Booking' }],
+  // New fields from IAgent interface
+  username: { type: String, unique: true, required: true },
+  age: { type: Number, required: true },
+  experience: { type: Number, required: true },
+  address: { type: String, required: true },
+  accountHolderName: { type: String, required: true },
+  accountNumber: { type: String, required: true },
+  bankName: { type: String, required: true },
+  ifscCode: { type: String, required: true },
+  imgUrl: { type: String, required: true }
 });
 
 const superAgentSchema = new mongoose.Schema({
@@ -109,7 +121,7 @@ const superAgentSchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false },
   referralCode : { type: String, required: true },
   commissionRate: { type: Number, required: false }, // Commission in percentage
-  agents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Managed Agents
+  agents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false }], // Managed Agents
   createdAt: { type: Date, default: Date.now },
 });
 

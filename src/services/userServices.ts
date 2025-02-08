@@ -342,6 +342,7 @@ class UserService {
 
   static async createSuperAgent(userData:ISuperAgent): Promise<IUserAuthInfo> {
     try {
+      console.log("userData", userData)
       const existingUser = await SuperAgent.findOne({ email: userData.email });
       if (existingUser) {
         throw new Error("User already exists");
@@ -351,16 +352,20 @@ class UserService {
       const hashedPassword = await bcrypt.hash(userData.password, salt);
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+      const referralCode = `${userData.name.substring(0, 3).toUpperCase()}-${Math.random().toString(36).substring(2, 8)}`;
+      console.log("referral code", referralCode)
       const superAgent = new SuperAgent({
         ...userData,
         password: hashedPassword,
         otp,
+        referralCode,
         otpExpiresAt,
         isVerified: false,
       });
-      const referralCode = `${superAgent.name.substring(0, 3).toUpperCase()}-${Math.random().toString(36).substring(2, 8)}`;
+      console.log("superAgent", superAgent)
       superAgent.referralsCode = referralCode;
       const savedUser = await superAgent.save();
+      console.log("savedUser", savedUser)
       await this.sendOTPEmail(savedUser.email, otp);
       const token = this.generateOtpToken(savedUser._id.toString(), savedUser.email);
       return { user: savedUser.toObject(), token };
