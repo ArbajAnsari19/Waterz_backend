@@ -17,6 +17,11 @@ export interface IUserAuthInfo {
   token: string;
 }
 
+export interface Filter {
+  status: "pending" | "completed"
+  agentWise: "All" | string
+}
+
 class UserprofileService{
 
 // customer
@@ -223,7 +228,51 @@ class UserprofileService{
     } catch (error) {
       throw new Error("Error getting user: " + (error as Error).message);
     }
-}
+  }
+
+  static async deleteAgent(agentId: string): Promise<IAgent | null> {
+    try {
+      return await Agent.findByIdAndDelete(agentId);
+    } catch (error) {
+      throw new Error("Error deleting agent: " + (error as Error).message);
+    }
+  }
+
+  static async listFilteredAgent(userId: string, filter: Filter): Promise<IBooking[]> {
+    try {
+      // Get all agents under this superAgent
+      const agents = await Agent.find({ superAgent: userId }).select('_id');
+      const agentIds = agents.map(agent => agent._id);
+
+      // Base query with agents filter
+      const query: any = {
+        agentId: { $in: agentIds }
+      };
+
+      // Add durationWise filter
+      if (filter.status === "pending") {
+        query.rideStatus = "pending";
+      } else if (filter.status === "completed") {
+        query.rideStatus = "completed";
+      }
+
+      // Add specific agent filter
+      if (filter.agentWise !== "All") {
+        query.agentId = filter.agentWise;
+      }
+
+      // Get bookings based on filters
+      const bookings = await Booking.find(query)
+        .sort({ createdAt: -1 })
+        .populate("userId", "name email phone")
+        .populate("agentId", "name email phone");
+
+      return bookings;
+    } catch (error) {
+      console.error("Error in listFilteredAgent:", error);
+      throw error;
+    }
+  }
 }
 
 class UserService {
