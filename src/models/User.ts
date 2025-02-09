@@ -95,15 +95,15 @@ const agentSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   bookings: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Booking' }],
   // New fields from IAgent interface
-  username: { type: String, unique: true, required: true },
-  age: { type: Number, required: true },
-  experience: { type: Number, required: true },
-  address: { type: String, required: true },
-  accountHolderName: { type: String, required: true },
-  accountNumber: { type: String, required: true },
-  bankName: { type: String, required: true },
-  ifscCode: { type: String, required: true },
-  imgUrl: { type: String, required: true }
+  username: { type: String, unique: true, required: false },
+  age: { type: Number, required: false },
+  experience: { type: Number, required: false },
+  address: { type: String, required: false },
+  accountHolderName: { type: String, required: false },
+  accountNumber: { type: String, required: false },
+  bankName: { type: String, required: false },
+  ifscCode: { type: String, required: false },
+  imgUrl: { type: String, required: false }
 });
 
 const superAgentSchema = new mongoose.Schema({

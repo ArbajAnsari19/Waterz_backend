@@ -276,6 +276,7 @@ class UserprofileService{
 }
 
 class UserService {
+
   static async createUser(userData:IUser | IOwner | IAgent): Promise<IUserAuthInfo> {
     try {
       const existingUser = await User.findOne({ email: userData.email });

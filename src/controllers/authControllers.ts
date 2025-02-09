@@ -114,14 +114,14 @@ export class AuthController {
   static async verifyOTP(req: Request, res: Response): Promise<void> {
     try {
       const { otp, token, role } = req.body;
-      // console.log("role", role)
+      console.log("role", role)
       const decoded = jwt.verify(token, process.env.OTP_JWT_SECRET as string) as { id: string };
-      // console.log("decoded", decoded)
+      console.log("decoded", decoded)
       const verified = await UserService.verifyOTP(decoded.id, otp, role);
-      // console.log("verified", verified)
+      console.log("verified", verified)
       if (verified) {
         const user = await UserService.findUserById(decoded.id,role);
-        // console.log("user", user)
+        console.log("user", user)
         const authToken = UserService.generateToken(decoded.id, user!.email, user!.role);
         res.status(200).json({ 
           message: 'OTP verified successfully',

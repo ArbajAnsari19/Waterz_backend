@@ -13,6 +13,7 @@ app.use(express.json());
 app.use(bodyParser.json());
 const allowedOrigins = [
   'http://wavezgoa.com',
+  'http://localhost:5173',
   'https://wavezgoa.com',
   'http://www.wavezgoa.com',
   'https://www.wavezgoa.com',
