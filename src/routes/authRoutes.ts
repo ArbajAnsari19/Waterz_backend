@@ -9,6 +9,7 @@ router.post("/signup/customer",  AuthController.signUpUser);
 router.post("/signup/owner",  AuthController.signUpOwner);
 router.post("/signup/agent/:referralCode", AuthController.signUpAgent);
 router.post("/signup/super-agent", AuthController.signUpSuperAgent);
+router.post("/signup/admin", AuthController.signUpAdmin);
 router.post('/signin', AuthController.signIn);
 router.post('/generate-otp', AuthController.generateOTP);
 router.post('/verify-otp', AuthController.verifyOTP);

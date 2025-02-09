@@ -33,7 +33,16 @@ export interface ISuperAgent extends IAgent {
 }
 
 export interface IAdmin {
-  user: IUser | string;
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  role: 'admin' | 'owner' | 'agent' | 'super-agent';
+  otp?: string;
+  otpExpiresAt?: Date;
+  isVerified: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 
@@ -126,7 +135,20 @@ const superAgentSchema = new mongoose.Schema({
 });
 
 const adminSchema = new mongoose.Schema({
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    name: { type: String, required: true },
+    email: { type: String, unique: true, required: true },
+    phone: { type: String, required: true },
+    password: { type: String, required: true },
+    otp: { type: String, required: false },
+    role: { 
+      type: String, 
+      enum: ['customer', 'owner', 'agent', 'super-agent', 'admin'],
+      required: true 
+    },
+    otpExpiresAt: { type: Date, required: false },
+    isVerified: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
 });
 
 

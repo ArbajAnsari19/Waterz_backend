@@ -13,7 +13,7 @@ dotenv.config();
 const OTP_JWT_SECRET = process.env.OTP_JWT_SECRET as string;
 
 export interface IUserAuthInfo {
-  user: IUser;
+  user: IUser | IAdmin;
   token: string;
 }
 
@@ -241,7 +241,7 @@ class UserprofileService{
   static async listFilteredAgent(userId: string, filter: Filter): Promise<IBooking[]> {
     try {
       // Get all agents under this superAgent
-      const agents = await Agent.find({ superAgent: userId }).select('_id');
+      const agents = await Agent.find({ superAgent: userId });
       const agentIds = agents.map(agent => agent._id);
 
       // Base query with agents filter
@@ -264,8 +264,6 @@ class UserprofileService{
       // Get bookings based on filters
       const bookings = await Booking.find(query)
         .sort({ createdAt: -1 })
-        .populate("userId", "name email phone")
-        .populate("agentId", "name email phone");
 
       return bookings;
     } catch (error) {
@@ -276,7 +274,7 @@ class UserprofileService{
 }
 
 class UserService {
-
+  
   static async createUser(userData:IUser | IOwner | IAgent): Promise<IUserAuthInfo> {
     try {
       const existingUser = await User.findOne({ email: userData.email });
@@ -426,6 +424,32 @@ class UserService {
     }
   }
 
+  static async createAdmin(userData:IAdmin): Promise<IUserAuthInfo> {
+    try {
+      const existingUser = await Admin.findOne({ email: userData.email });
+      if (existingUser) {
+        throw new Error("User already exists");
+      }
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(userData.password, salt);
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+      const user = new Admin({
+        ...userData,
+        password: hashedPassword,
+        otp,
+        otpExpiresAt,
+        isVerified: false,
+      });
+      const savedUser = await user.save();
+      await this.sendOTPEmail(savedUser.email, otp);
+      const token = this.generateOtpToken(savedUser._id.toString(), savedUser.email);
+      return { user: savedUser.toObject(), token };
+    } catch (error) {
+      throw new Error((error as Error).message);
+    }
+  }
   static async validatePassword(email: string, password: string, role :string): Promise<{ token: string; user: any } | null> {
     try {
       const Role = findRoleById(role);

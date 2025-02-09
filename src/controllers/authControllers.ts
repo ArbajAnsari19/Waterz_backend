@@ -56,7 +56,19 @@ export class AuthController {
       res.status(500).json({ message: (error as Error).message });
     }
   }
-  
+
+  static async signUpAdmin(req: Request, res: Response): Promise<void> {
+    try {
+      const { token } = await UserService.createAdmin(req.body);
+      res.status(201).json({
+        message: "Signup successful! Please verify your email with the OTP sent.",
+        redirect: 'verify-otp',
+        token,
+      });
+    } catch (error) {
+      res.status(500).json({ message: (error as Error).message });
+    }
+  }
   static async signIn(req: Request, res: Response): Promise<void> {
     try {
       console.log(req.body);
