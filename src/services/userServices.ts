@@ -759,9 +759,10 @@ class UserService {
 }
 
 class AdminService {
+
   static async getAllYatchs(): Promise<IUser[]> {
     try {
-      return await User.find();
+      return await Yacht.find();
     } catch (error) {
       throw new Error("Error listing users: " + (error as Error).message);
     }
@@ -870,15 +871,15 @@ class AdminService {
   
       // Apply status filter
       switch(status) {
-        case "All":
+        case "all":
           // No filter needed for "All"
           break;
-        case "RecentAdded":
+        case "recent":
           const sevenDaysAgo = new Date();
           sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
           query.createdAt = { $gte: sevenDaysAgo };
           break;
-        case "Requested":
+        case "requested":
           query.isVerifiedByAdmin = { $in: [true, false] };
           break;
         default:
@@ -960,20 +961,24 @@ class AdminService {
       switch(status) {
         case "all":
           break;
-        case "pending":
-          query.rideStatus = 'pending';
+        case "upcoming":
+          query.rideStatus = 'upcoming';
           break;
-        case "completed":
+        case "previous":
           query.rideStatus = 'completed';
           break;
         default:
           throw new Error(`Invalid status filter: ${status}`);
       }
   
-      // Apply name search if provided and not empty
-      if (searchName && searchName.trim()) {
-        query.name = { $regex: searchName.trim(), $options: 'i' };
-      }
+        // Then apply search query if provided
+        if (searchName && searchName.trim()) {
+          query.$or = [
+            { name: { $regex: searchName.trim(), $options: 'i' } },
+            { email: { $regex: searchName.trim(), $options: 'i' } },
+            { phone: { $regex: searchName.trim(), $options: 'i' } }
+          ];
+          }
   
       console.log('Final query:', JSON.stringify(query));
   

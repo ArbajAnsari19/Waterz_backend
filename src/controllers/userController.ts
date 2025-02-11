@@ -8,12 +8,12 @@ export interface EarningFilter {
 }
 export interface AdminFilter {
     searchName: string;
-    status: "All" | "RecentAdded" | "Requested";
+    status: "all" | "recent" | "requested";
 }
 export interface AdminFilterBooking {
     bookedBy : "all" | "customer" | "agent",
     searchName : string,
-    status : "all" | "pending" | "completed",
+    status : "all" | "upcoming" | "previous",
 }
 
 export interface AdminCustomerFilter {
@@ -373,8 +373,8 @@ export class adminController{
                 bookedBy:req.body.bookedBy,
                 searchName:req.body.searchName,
                 status:req.body.status,};
-            const yatchs = await AdminService.filteredBooking(filters);
-            res.status(200).json({ yatchs });
+            const bookings = await AdminService.filteredBooking(filters);
+            res.status(200).json({ bookings });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }

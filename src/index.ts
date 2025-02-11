@@ -15,6 +15,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://wavezgoa.com',
+  'http://localhost:5173',
   'https://wavezgoa.com',
   'http://www.wavezgoa.com',
   'https://www.wavezgoa.com',
