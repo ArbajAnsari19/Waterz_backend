@@ -4,8 +4,13 @@ import Booking, {BookingAgent,IBookingAgent} from "../models/Booking";
 import Owner from "../models/User";
 import User,{ Agent } from "../models/User";
 import Razorpay from "razorpay";
-import { TRIP_COMBINATIONS } from "../utils/trip";
+import { PackageType } from "../utils/trip";
 
+interface customerData {
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+}
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || (() => { throw new Error("RAZORPAY_KEY_ID is not defined"); })(),
   key_secret: process.env.RAZORPAY_KEY_SECRET,
@@ -15,67 +20,96 @@ class BookingService {
 
   static async createBooking(BookingDetails: Partial<IBooking>): Promise<{booking: IBooking, orderId: string }> {
     try {
-      const { startDate, startTime, duration, location, tripType, timeOption, PeopleNo, sailingTime, anchorage, specialEvent, specialRequest, user, yacht } = BookingDetails;
-      const yachtDetails = await Yacht.findById(yacht);
-      if (!yachtDetails) throw new Error("Yacht not found");
-  
-      const tripCombination = TRIP_COMBINATIONS.find(t => t.id === tripType);
-      if (!tripCombination) throw new Error("Invalid trip type");
-  
-      const selectedTime = tripCombination.options[timeOption || 0];
-      if (!selectedTime) throw new Error("Invalid time option");
-  
-      const startDateTime = new Date(startDate!);
-      const totalDuration = selectedTime.sailing + selectedTime.anchorage;
-      const endDateTime = new Date(startDateTime.getTime() + totalDuration * 60 * 60 * 1000);
+      const { 
+        startDate, 
+        startTime, 
+        location, 
+        packages, 
+        PeopleNo, 
+        addonServices, 
+        user, 
+        yacht 
+      } = BookingDetails;
 
-      // Ensure PeopleNo <= capacity
+    // Find yacht
+    const yachtDetails = await Yacht.findById(yacht);
+    if (!yachtDetails) throw new Error("Yacht not found");
 
-      if (PeopleNo && PeopleNo > yachtDetails.capacity) {
-        throw new Error("Number of people exceeds yacht capacity");
-      }
-
-      // Check for overlapping bookings
-      const overlappingBookings = await Booking.find({
-        yacht: yacht,
-        status: 'confirmed',
-        $or: [
-          { startDate: { $lt: endDateTime }, endDate: { $gt: startDateTime } },
-          { startDate: { $gte: startDateTime, $lt: endDateTime } },
-          { endDate: { $gt: startDateTime, $lte: endDateTime } }
-        ]
+    // Extract package times
+    const getPackageDuration = (packageType: PackageType): { sailingHours: number, anchorageHours: number } => {
+      const [sailing, anchoring] = packageType.split('_hour').map(part => {
+        const match = part.match(/(\d+\.?\d*)/);
+        return match ? parseFloat(match[0]) : 0;
       });
+      return { sailingHours: sailing, anchorageHours: anchoring };
+    };
+    if (!packages) {
+      throw new Error("Packages are required");
+    }
 
-      if (overlappingBookings.length > 0) {
-        throw new Error("The yacht is not available for the selected dates and times");
-      }
+    const { sailingHours, anchorageHours } = getPackageDuration(packages.type);
+    const totalHours = sailingHours + anchorageHours;
 
-      // Calculate the total amount
-      const sailingCharge = yachtDetails.price.sailing * selectedTime.sailing;
-      const stillCharge = yachtDetails.price.still * selectedTime.anchorage;
-      const totalAmount = sailingCharge + stillCharge;
+    // Calculate dates
+    const startDateTime = new Date(`${startDate}T${startTime}`);
+    const endDateTime = new Date(startDateTime.getTime() + (totalHours * 60 * 60 * 1000));
+
+    // Validate capacity
+    if (PeopleNo && PeopleNo > yachtDetails.capacity) {
+      throw new Error("Number of people exceeds yacht capacity");
+    }    
+
+    // Check availability
+    const overlappingBookings = await Booking.find({
+      yacht: yacht,
+      status: 'confirmed',
+      $or: [
+        { startDate: { $lt: endDateTime }, endDate: { $gt: startDateTime } },
+        { startDate: { $gte: startDateTime, $lt: endDateTime } },
+        { endDate: { $gt: startDateTime, $lte: endDateTime } }
+      ]
+    });
+
+    if (overlappingBookings.length > 0) {
+      throw new Error("The yacht is not available for the selected dates and times");
+    }
+    // Calculate total amount
+    const isPeakTime = true; // TODO: Implement peak time logic
+    const sailingPrice = isPeakTime ? yachtDetails.price.sailing.peakTime : yachtDetails.price.sailing.nonPeakTime;
+    const anchoragePrice = isPeakTime ? yachtDetails.price.anchoring.peakTime : yachtDetails.price.anchoring.nonPeakTime;
+
+    let totalAmount = (sailingPrice * sailingHours) + (anchoragePrice * anchorageHours);
+    // Addon services cost
+    if (addonServices && addonServices.length > 0) {
+      const addonsCost = addonServices.reduce((sum, addon) => {
+        const yachtAddon = yachtDetails.addonServices.find(a => a.service === addon.service);
+        return sum + (yachtAddon ? yachtAddon.pricePerHour * addon.hours : 0);
+      }, 0);
+      totalAmount += addonsCost;
+    }
+
+    // Fetch user details
+    const userDetails = await User.findById(user);
+    if (!userDetails) throw new Error("User not found");
       // In BookingService.createBooking
         const booking = new Booking({
           ...BookingDetails,
           user,
           yacht,
-          tripType,
-          timeOption,
           bookingDateTime: new Date(),
           location,
-          duration,
+          packages,
           startDate: startDateTime,
           startTime: startDateTime,
           endDate: endDateTime,
-          sailingTime: selectedTime.sailing,
-          anchorage: selectedTime.anchorage,
-          rideStatus: 'pending',  // Ensure this is explicitly set
+          YachtType: yachtDetails.YachtType,
           capacity: yachtDetails.capacity,
+          customerName: userDetails.name,
+          customerEmail: userDetails.email,
+          customerPhone: userDetails.phone,
           PeopleNo,
-          specialEvent,
-          specialRequest,
           totalAmount,
-          services: BookingDetails.services || [],
+          addonServices: addonServices || [],
           paymentStatus: 'pending',
           status: 'confirmed',
           calendarSync: false
@@ -104,26 +138,45 @@ class BookingService {
 
   static async searchIdealYachts(searchParams: Partial<IBooking>): Promise<IYacht[]> {
     try {
-      const { startDate, startTime, duration, location, YachtType, capacity } = searchParams;
+      const { startDate, startTime, location, YachtType, PeopleNo, addonServices, packages } = searchParams;
 
       // Validate inputs
-      if (!startDate || !startTime || !duration) {
-        throw new Error("Start date, time and duration are required");
+      if (!startDate || !startTime ) {
+        throw new Error("Start date, time  are required");
       }
 
-      // Calculate end date and time
-      const startDateTime = new Date(`${startDate}T${startTime}`);
-      if (duration === undefined) {
-        throw new Error("Duration is required");
-      }
-      const BUFFER_TIME = 30 * 60 * 1000; // 30 min buffer
-      const endDateTime = new Date(startDateTime.getTime() + (duration * 60 * 60 * 1000) + BUFFER_TIME);
+    // Extract sailing and anchoring times from package
+    const getPackageDuration = (packageType: PackageType): { sailingHours: number, anchorageHours: number } => {
+      const [sailing, anchoring] = packageType.split('_hour').map(part => {
+        const match = part.match(/(\d+\.?\d*)/);
+        return match ? parseFloat(match[0]) : 0;
+      });
+      return { sailingHours: sailing, anchorageHours: anchoring };
+    };
+    if(!packages) {
+      throw new Error("Packages are required");
+    }
+    const { sailingHours, anchorageHours } = getPackageDuration(packages.type);
+    const totalHours = sailingHours + anchorageHours;
+
+    // Calculate end date and time
+    const startDateTime = new Date(`${startDate}T${startTime}`);
+    const BUFFER_TIME = 30 * 60 * 1000; // 30 min buffer
+    const HOUR_IN_MS = 60 * 60 * 1000;
+    const endDateTime = new Date(startDateTime.getTime() + (totalHours * HOUR_IN_MS) + BUFFER_TIME);
 
       // Find yachts that match the search criteria
       const yachts = await Yacht.find({
         location,
-        type: YachtType,
-        capacity: { $gte: capacity }
+        YachtType: YachtType,
+        capacity: { $gte: PeopleNo },
+        addonServices: {
+          $elemMatch: {
+            service: { 
+              $in: addonServices?.map(a => a.service) || [] 
+            }
+          }
+        }      
       });
 
       // Filter out yachts that have overlapping bookings
@@ -150,13 +203,26 @@ class BookingService {
     }
   }
 
-  static async createAgentBooking(BookingDetails: Partial<IBookingAgent>): Promise<{booking: IBookingAgent, orderId: string }> {
+  static async createAgentMultipleBooking(BookingDetails: Partial<IBookingAgent>): Promise<{booking: IBookingAgent, orderId: string }> {
     try {
-      const { startDate, startTime, duration, location, PeopleNo, sailingTime, anchorage, specialEvent, specialRequest, user, yachts, noOfYatchs, customerEmail, customerName, customerPhone} = BookingDetails;
-      // Check if the yachts exists and get its details
+      const { 
+        startDate, 
+        startTime, 
+        location, 
+        packages,
+        PeopleNo, 
+        addonServices,
+        user, 
+        yachts,
+        customerEmail,
+        customerName,
+        customerPhone
+      } = BookingDetails;
+      
       if (!yachts) {
         throw new Error("Yachts are required");
       }
+      // Get yacht details
       const yachtDetails = await Promise.all(
         yachts.map(async (yachtId) => {
           const yacht = await Yacht.findById(yachtId);
@@ -164,17 +230,31 @@ class BookingService {
           return yacht;
         })
       );
+    // Extract package times
+    const getPackageDuration = (packageType: PackageType): { sailingHours: number, anchorageHours: number } => {
+      const [sailing, anchoring] = packageType.split('_hour').map(part => {
+        const match = part.match(/(\d+\.?\d*)/);
+        return match ? parseFloat(match[0]) : 0;
+      });
+      return { sailingHours: sailing, anchorageHours: anchoring };
+    };
 
-    // 2. Check total capacity
+    if (!packages) throw new Error("Packages are required");
+    const { sailingHours, anchorageHours } = getPackageDuration(packages.type);
+    const totalHours = sailingHours + anchorageHours;
+
+
+    // Calculate dates
+    const startDateTime = new Date(`${startDate}T${startTime}`);
+    const endDateTime = new Date(startDateTime.getTime() + (totalHours * 60 * 60 * 1000));
+
+    // Check total capacity
     const totalCapacity = yachtDetails.reduce((sum, yacht) => sum + yacht.capacity, 0);
     if (PeopleNo && PeopleNo > totalCapacity) {
       throw new Error("Number of people exceeds total yachts capacity");
     }
 
-    const startDateTime = new Date(`${startDate}T${startTime}`);
-    if (!duration) throw new Error("Duration is required");
-    const endDateTime = new Date(startDateTime.getTime() + duration * 60 * 60 * 1000);
-
+    // Check availability for all yachts
     await Promise.all(
       yachtDetails.map(async (yacht) => {
         const overlappingBookings = await Booking.find({
@@ -193,77 +273,201 @@ class BookingService {
       })
     );
       
-
-    // 4. Calculate total amount with agent discount
-    const agent = await Agent.findById(user);
-    const agentDiscount = agent?.discount ?? 0;
-
-    const totalAmount = yachtDetails.reduce((sum, yacht) => {
-      //@ts-ignore
-      const sailingCharge = yacht.price.sailing * sailingTime;
-      //@ts-ignore
-      const stillCharge = yacht.price.still * anchorage;
-      return sum + sailingCharge + stillCharge;
+    // Calculate total amount
+    const isPeakTime = true; // TODO: Implement peak time logic
+    let totalAmount = yachtDetails.reduce((sum, yacht) => {
+      const sailingPrice = isPeakTime ? yacht.price.sailing.peakTime : yacht.price.sailing.nonPeakTime;
+      const anchoragePrice = isPeakTime ? yacht.price.anchoring.peakTime : yacht.price.anchoring.nonPeakTime;
+      return sum + (sailingPrice * sailingHours) + (anchoragePrice * anchorageHours);
     }, 0);
 
+    // Add addon services cost
+    if (addonServices?.length) {
+      const addonsCost = yachtDetails.reduce((sum, yacht) => {
+        return sum + addonServices.reduce((addonSum, addon) => {
+          const yachtAddon = yacht.addonServices.find(a => a.service === addon.service);
+          return addonSum + (yachtAddon ? yachtAddon.pricePerHour * addon.hours : 0);
+        }, 0);
+      }, 0);
+      totalAmount += addonsCost;
+    }
+
+    // Apply agent discount
+    const agent = await Agent.findById(user);
+    const agentDiscount = agent?.discount ?? 0;
+    const discountedAmount = totalAmount - (totalAmount * agentDiscount / 100);
+
+
+    // Create booking
+    const bookingAgent = new BookingAgent({
+      ...BookingDetails,
+      user,
+      yachts,
+      bookingDateTime: new Date(),
+      location,
+      packages,
+      startDate: startDateTime,
+      startTime: startDateTime,
+      endDate: endDateTime,
+      capacity: totalCapacity,
+      PeopleNo,
+      totalAmount: discountedAmount,
+      customerEmail,
+      customerName,
+      isAgentBooking: true,
+      customerPhone,
+      addonServices: addonServices || [],
+      paymentStatus: 'pending',
+      status: 'confirmed',
+      calendarSync: false
+    });
+
+      const options = {
+        amount: discountedAmount * 100, 
+        currency: "INR",
+        //@ts-ignore
+        receipt: bookingAgent._id.toString()
+      };
+
+      const order = await razorpay.orders.create(options);
+      bookingAgent.razorpayOrderId = order.id;
+      await bookingAgent.save();
+
+    // Update owners and user
+    await Promise.all([
+      ...yachtDetails.map(yacht => 
+        Owner.findByIdAndUpdate(yacht.owner, { $push: { bookings: bookingAgent._id } })
+      ),
+      User.findByIdAndUpdate(user, { $push: { bookings: bookingAgent._id } })
+    ]);
+
+    return { booking: bookingAgent, orderId: order.id };
+    } catch (error) {
+      throw new Error((error as Error).message);
+    }
+  }
+
+  static async createAgentBooking(BookingDetails: Partial<IBooking>, customerData:customerData): Promise<{booking: IBooking, orderId: string }> {
+    try {
+      const { 
+        startDate, 
+        startTime, 
+        location, 
+        packages, 
+        PeopleNo, 
+        addonServices, 
+        user, 
+        yacht,
+      } = BookingDetails;
+      const { customerName, customerPhone, customerEmail } = customerData;
+
+    // Find yacht
+    const yachtDetails = await Yacht.findById(yacht);
+    if (!yachtDetails) throw new Error("Yacht not found");
+
+    // Extract package times
+    const getPackageDuration = (packageType: PackageType): { sailingHours: number, anchorageHours: number } => {
+      const [sailing, anchoring] = packageType.split('_hour').map(part => {
+        const match = part.match(/(\d+\.?\d*)/);
+        return match ? parseFloat(match[0]) : 0;
+      });
+      return { sailingHours: sailing, anchorageHours: anchoring };
+    };
+    if (!packages) {
+      throw new Error("Packages are required");
+    }
+
+    const { sailingHours, anchorageHours } = getPackageDuration(packages.type);
+    const totalHours = sailingHours + anchorageHours;
+
+    // Calculate dates
+    const startDateTime = new Date(`${startDate}T${startTime}`);
+    const endDateTime = new Date(startDateTime.getTime() + (totalHours * 60 * 60 * 1000));
+
+    // Validate capacity
+    if (PeopleNo && PeopleNo > yachtDetails.capacity) {
+      throw new Error("Number of people exceeds yacht capacity");
+    }    
+
+    // Check availability
+    const overlappingBookings = await Booking.find({
+      yacht: yacht,
+      status: 'confirmed',
+      $or: [
+        { startDate: { $lt: endDateTime }, endDate: { $gt: startDateTime } },
+        { startDate: { $gte: startDateTime, $lt: endDateTime } },
+        { endDate: { $gt: startDateTime, $lte: endDateTime } }
+      ]
+    });
+
+    if (overlappingBookings.length > 0) {
+      throw new Error("The yacht is not available for the selected dates and times");
+    }
+    // Calculate total amount
+    const isPeakTime = true; // TODO: Implement peak time logic
+    const sailingPrice = isPeakTime ? yachtDetails.price.sailing.peakTime : yachtDetails.price.sailing.nonPeakTime;
+    const anchoragePrice = isPeakTime ? yachtDetails.price.anchoring.peakTime : yachtDetails.price.anchoring.nonPeakTime;
+
+    let totalAmount = (sailingPrice * sailingHours) + (anchoragePrice * anchorageHours);
+    // Addon services cost
+    if (addonServices && addonServices.length > 0) {
+      const addonsCost = addonServices.reduce((sum, addon) => {
+        const yachtAddon = yachtDetails.addonServices.find(a => a.service === addon.service);
+        return sum + (yachtAddon ? yachtAddon.pricePerHour * addon.hours : 0);
+      }, 0);
+      totalAmount += addonsCost;
+    }
+    // Apply agent discount
+    const agent = await Agent.findById(user);
+    if (!agent) throw new Error("Agent not found");
+    const agentDiscount = agent.discount ?? 0;
     const discountedAmount = totalAmount - (totalAmount * agentDiscount / 100);
 
       // In BookingService.createBooking
-      const bookingAgent = new BookingAgent({
+      const booking = new Booking({
         ...BookingDetails,
         user,
-        yachts, // Array of yacht IDs
+        yacht,
         bookingDateTime: new Date(),
         location,
-        duration,
+        packages,
         startDate: startDateTime,
         startTime: startDateTime,
         endDate: endDateTime,
-        sailingTime,
-        anchorage,
-        rideStatus: 'pending',
-        capacity: totalCapacity,
+        YachtType: yachtDetails.YachtType,
+        capacity: yachtDetails.capacity,
         PeopleNo,
-        specialEvent,
-        specialRequest,
+        isAgentBooking: true,
         totalAmount: discountedAmount,
-        customerEmail,
-        customerName,
-        customerPhone,
-        noOfYatchs,
-        services: BookingDetails.services || [],
+        customerName: customerData.customerName,
+        customerEmail: customerData.customerEmail,
+        customerPhone: customerData.customerPhone,
+        addonServices: addonServices || [],
         paymentStatus: 'pending',
         status: 'confirmed',
         calendarSync: false
       });
 
       const options = {
-        amount: discountedAmount * 100, 
+        amount: totalAmount * 100, 
         currency: "INR",
         //@ts-ignore
         receipt: booking._id.toString(),
       };
       const order = await razorpay.orders.create(options);
-      bookingAgent.razorpayOrderId = order.id;
-      await bookingAgent.save();
+      booking.razorpayOrderId = order.id;
+      await booking.save();
 
-      // Update all owners
-      const ownerUpdates = yachtDetails.map(yacht => 
-        Owner.findByIdAndUpdate(yacht.owner, { $push: { bookings: bookingAgent._id } })
-      );
-      await Promise.all(ownerUpdates);
-
-    // Update user
-      await User.findByIdAndUpdate(user, { $push: { bookings: bookingAgent._id } });
-
-    return { booking: bookingAgent, orderId: order.id };
-
+      await User.findByIdAndUpdate(user, { $push: { bookings: booking._id } });
+      const owner = yachtDetails.owner;
+      await Owner.findByIdAndUpdate(owner, { $push: { bookings: booking._id } });
+      
+      return { booking, orderId: order.id };
 
     } catch (error) {
       throw new Error((error as Error).message);
     }
   }
-
 }
 
 export default BookingService;

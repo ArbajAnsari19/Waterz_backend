@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import YatchService from '../services/yatchServices';
 import UserService from '../services/userServices';
+import {LocationType,AddonService} from '../utils/trip';
+
 
 export class YatchController {
 
@@ -49,24 +51,50 @@ export class YatchController {
         const {
             name,
             images,
-            pickupat,
             description,
             capacity,
             mnfyear,
             dimension,
             location,
-            category,
+            pickupat,
             YachtType,
             crews,
             amenities,
             availability,
-            price
+            price,
+            addonServices
           } = req.body;
-        const owner = req.currentUser.id;
-        const yatchDetails = {
+
+
+          // Validate required fields
+          if (!name || !images || !location || !pickupat || !YachtType) {
+            throw new Error('Missing required fields');
+          }
+
+          // Validate location is valid enum value
+          if (!Object.values(LocationType).includes(location)) {
+            throw new Error('Invalid location');
+          }
+
+          // Validate price structure
+          if (!price?.sailing?.peakTime || !price?.sailing?.nonPeakTime || 
+              !price?.anchoring?.peakTime || !price?.anchoring?.nonPeakTime) {
+            throw new Error('Invalid price structure');
+          }
+
+          // Validate addon services
+          if (addonServices) {
+            addonServices.forEach((addon: { service: string; pricePerHour: number }) => {
+              if (!addon.service || !addon.pricePerHour || 
+                !Object.values(AddonService).includes(addon.service as AddonService)) {
+              throw new Error('Invalid addon service structure');
+              }
+            });
+          }
+          const owner = req.currentUser.id;
+          const yachtDetails = {
             owner,
             name,
-            pickupat,
             images,
             description,
             capacity,
@@ -74,14 +102,16 @@ export class YatchController {
             YachtType,
             dimension,
             location,
-            category,
+            pickupat,
             crews,
             amenities,
             availability,
-            price
+            price,
+            addonServices: addonServices || []
           };
-        const { yachtId } = await YatchService.createYatch(yatchDetails);
-        await UserService.addYachtToOwner(owner, yachtId);
+      
+          const { yachtId } = await YatchService.createYatch(yachtDetails);
+          await UserService.addYachtToOwner(owner, yachtId);
         res.status(201).json({ message: 'Yatch created successfully', yachtId });
     } catch (error) {
       res.status(500).json({ message: (error as Error).message });
@@ -104,16 +134,6 @@ export class YatchController {
       const { id } = req.params;
       await YatchService.deleteYatch(id);
       res.status(200).json({ message: 'Yacht deleted successfully' });
-    } catch (error) {
-      res.status(500).json({ message: (error as Error).message });
-    }
-  }
-
-  static async findNearbyYachts(req: Request, res: Response): Promise<void> {
-    try {
-      const { longitude, latitude, maxDistance, page = 1, limit = 10 } = req.body;
-      const yachts = await YatchService.findNearbyYachts(longitude, latitude, maxDistance, page, limit);
-      res.status(200).json(yachts);
     } catch (error) {
       res.status(500).json({ message: (error as Error).message });
     }

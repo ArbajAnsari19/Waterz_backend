@@ -4,10 +4,10 @@ import jwt from "jsonwebtoken";
 import EmailService from "./emailService";
 import dotenv from "dotenv";
 import {findRoleById} from "../utils/role";
-import Yacht from "../models/Yacht";
+import Yacht, { IYacht } from "../models/Yacht";
 import Booking, {IBooking} from "../models/Booking"; 
-
-
+import { EarningFilter } from "../controllers/userController";
+import {AdminFilter,ApprovedDetails,AgentFilterBooking,AgentCustomerFilter} from "../controllers/userController";
 
 dotenv.config();
 const OTP_JWT_SECRET = process.env.OTP_JWT_SECRET as string;
@@ -20,6 +20,10 @@ export interface IUserAuthInfo {
 export interface Filter {
   status: "pending" | "completed"
   agentWise: "All" | string
+}
+interface AgentWithBookings {
+  agent: IAgent | null;
+  totalBookings: number;
 }
 
 class UserprofileService{
@@ -222,6 +226,22 @@ class UserprofileService{
     }
   }
 
+  static async agentDetail(userId: string): Promise<AgentWithBookings | null> {
+    try {
+      // Get agent details
+      const agent = await Agent.findById(userId);
+      // Get bookings count for this agent
+      const bookings = await Booking.find({ agentId: userId });
+      const totalBookings = bookings.length;
+      // Return combined response
+      return {
+        agent,
+        totalBookings
+      };
+    } catch (error) {
+      throw new Error("Error getting user: " + (error as Error).message);
+    }
+  }
   static async paymentDetail(userId: string): Promise<IUser | null> {
     try {
       return await User.findById(userId);
@@ -240,37 +260,146 @@ class UserprofileService{
 
   static async listFilteredAgent(userId: string, filter: Filter): Promise<IBooking[]> {
     try {
-      // Get all agents under this superAgent
-      const agents = await Agent.find({ superAgent: userId });
-      const agentIds = agents.map(agent => agent._id);
+      // Debug logging
+      console.log('SuperAgent ID:', userId);
+      console.log('Filter:', filter);
 
-      // Base query with agents filter
-      const query: any = {
-        agentId: { $in: agentIds }
+      // Set default values if not provided
+      const filterWithDefaults = {
+        status: filter.status || "completed",
+        agentWise: filter.agentWise || "All"
       };
-
-      // Add durationWise filter
-      if (filter.status === "pending") {
-        query.rideStatus = "pending";
-      } else if (filter.status === "completed") {
-        query.rideStatus = "completed";
+      // 1. Get all agents under this superAgent
+      const agents = await Agent.find({ superAgent: userId });
+      
+      if (agents.length === 0) {
+        console.log('No agents found for superAgent:', userId);
+        return [];
       }
 
-      // Add specific agent filter
-      if (filter.agentWise !== "All") {
-        query.agentId = filter.agentWise;
+      // 2. Build base query
+      let query: any = {};
+
+      // 3. Apply agent filter with fixed comparison
+      if (filterWithDefaults.agentWise === "All") {
+        query.agentId = { $in: agents.map(agent => agent._id) };
+      } else {
+        const agentExists = agents.some(agent => 
+          agent._id.toString() === filterWithDefaults.agentWise.toString()
+        );
+        
+        console.log('Agent exists check:', agentExists);
+        if (!agentExists) {
+          throw new Error('Selected agent does not belong to this superAgent');
+        }
+        query.agentId = filterWithDefaults.agentWise;
       }
 
-      // Get bookings based on filters
+      // 4. Apply status filter
+      query.rideStatus = filterWithDefaults.status;
+
+
+      // Debug: Log final query
+      console.log('Final query:', JSON.stringify(query));
+
       const bookings = await Booking.find(query)
         .sort({ createdAt: -1 })
+        .populate('agentId');
 
       return bookings;
+
     } catch (error) {
       console.error("Error in listFilteredAgent:", error);
       throw error;
     }
+  } 
+
+  static async listFilteredEarnings(userId: string, filter: EarningFilter): Promise<any> {
+    try {
+      // 1. Get date range based on timeframe
+      const getDateRange = (timeframe: string) => {
+        const now = new Date();
+        switch (timeframe) {
+          case 'today':
+            return {
+              start: new Date(now.setHours(0, 0, 0, 0)),
+              end: new Date(now.setHours(23, 59, 59, 999))
+            };
+          case 'last_week':
+            const lastWeek = new Date(now.setDate(now.getDate() - 7));
+            return {
+              start: lastWeek,
+              end: now
+            };
+          case 'last_month':
+            const lastMonth = new Date(now.setMonth(now.getMonth() - 1));
+            return {
+              start: lastMonth,
+              end: now
+            };
+          default:
+            return {
+              start: new Date(0),
+              end: now
+            };
+        }
+      };
+  
+      // 2. Build query
+      const { start, end } = getDateRange(filter.timeframe);
+      const query: any = {
+        createdAt: { $gte: start, $lte: end },
+        paymentStatus: 'completed'
+      };
+  
+      // 3. Get agents under superAgent
+      const agents = await Agent.find({ superAgent: userId });
+      if (!agents.length) return [];
+  
+      // 4. Filter by specific agent if provided
+      if (filter.agentWise !== 'All') {
+        const agentExists = agents.some(agent => 
+          agent._id.toString() === filter.agentWise
+        );
+        if (!agentExists) {
+          throw new Error('Invalid agent selection');
+        }
+        query.user = filter.agentWise;
+      } else {
+        query.user = { $in: agents.map(agent => agent._id) };
+      }
+  
+      // 5. Get bookings and calculate earnings
+      const bookings = await Booking.find(query)
+        .sort({ createdAt: -1 });
+  
+      // 6. Calculate earnings
+      const earnings = bookings.map(booking => {
+        const agent = agents.find(a => a._id.toString() === booking.user?.toString());
+        const commissionRate = agent?.commissionRate || 0;
+        const earningAmount = (booking.totalAmount * commissionRate) / 100;
+  
+        return {
+          bookingId: booking._id,
+          date: booking.createdAt,
+          yachtName: booking.yacht,
+          totalAmount: booking.totalAmount,
+          commissionRate,
+          earningAmount,
+          agentName: agent?.name,
+          customerName: booking.customerName,
+          status: booking.status
+        };
+      });
+  
+      return earnings;
+  
+    } catch (error) {
+      console.error("Error in listFilteredEarnings:", error);
+      throw error;
+    }
   }
+
 }
 
 class UserService {
@@ -450,6 +579,7 @@ class UserService {
       throw new Error((error as Error).message);
     }
   }
+  
   static async validatePassword(email: string, password: string, role :string): Promise<{ token: string; user: any } | null> {
     try {
       const Role = findRoleById(role);
@@ -731,6 +861,159 @@ class AdminService {
     }
   }
 
+  static async filterYatchs(filter: AdminFilter): Promise<IYacht[]> {
+    try {
+      const { status, searchName } = filter;
+      let query: any = {};
+  
+      console.log('Received filters:', { status, searchName });
+  
+      // Apply status filter
+      switch(status) {
+        case "All":
+          // No filter needed for "All"
+          break;
+        case "RecentAdded":
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          query.createdAt = { $gte: sevenDaysAgo };
+          break;
+        case "Requested":
+          query.isVerifiedByAdmin = { $in: [true, false] };
+          break;
+        default:
+          throw new Error(`Invalid status filter: ${status}`);
+      }
+  
+      // Apply name search if provided and not empty
+      if (searchName && searchName.trim()) {
+        query.name = { $regex: searchName.trim(), $options: 'i' };
+      }
+  
+      console.log('Final query:', JSON.stringify(query));
+  
+      const yachts = await Yacht.find(query)
+        .sort({ createdAt: -1 })
+  
+      return yachts;
+  
+    } catch (error) {
+      console.error("Error in filterYatchs:", error);
+      throw error;
+    }
+  }
+
+  static async yatchRequestDetails(yatchId: string): Promise<IYacht | null> {
+    try {
+      return await Yacht.findById({yatchId, isVerifiedByAdmin: false});
+    } catch (error) {
+      throw new Error("Error getting yatch details: " + (error as Error).message);
+    }
+  }
+
+  static async isApprovedYatch(updateDetails:ApprovedDetails,yatchId: string): Promise<IYacht | null> {
+    try {
+      const { sailingPeakTimePrice, sailingNonPeakTimePrice, anchoringPeakTimePrice, anchoringNonPeakTimePrice,approved } = updateDetails;
+      const yatch = await Yacht.findByIdAndUpdate(yatchId,
+        { 
+          price: {
+            sailing: {
+              peakTime: sailingPeakTimePrice,
+              nonPeakTime: sailingNonPeakTimePrice
+            },
+            anchoring: {
+              peakTime: anchoringPeakTimePrice,
+              nonPeakTime: anchoringNonPeakTimePrice
+            }
+          },
+          isVerifiedByAdmin: approved 
+        }, { new: true });
+        return yatch;
+    }
+    catch (error) {
+      throw new Error("Error verifying yatch: " + (error as Error).message);
+    }
+  }
+
+  static async filteredBooking(filter: AgentFilterBooking): Promise<IBooking[]> {
+    try {
+      const { status, searchName, bookedBy } = filter;
+      let query: any = {};
+  
+      console.log('Received filters:', { status, searchName, bookedBy });
+  
+      // Apply bookedBy filter
+      switch(bookedBy) {
+        case "all":
+          break;
+        case "customer":
+          query.isAgentBooking = false;
+          break;
+        case "agent":
+          query.isAgentBooking = true;
+          break;
+        default:
+          throw new Error(`Invalid bookedBy filter: ${bookedBy}`);
+      }
+  
+      // Apply status filter
+      switch(status) {
+        case "all":
+          break;
+        case "pending":
+          query.rideStatus = 'pending';
+          break;
+        case "completed":
+          query.rideStatus = 'completed';
+          break;
+        default:
+          throw new Error(`Invalid status filter: ${status}`);
+      }
+  
+      // Apply name search if provided and not empty
+      if (searchName && searchName.trim()) {
+        query.name = { $regex: searchName.trim(), $options: 'i' };
+      }
+  
+      console.log('Final query:', JSON.stringify(query));
+  
+      const bookings = await Booking.find(query)
+        .sort({ createdAt: -1 })
+  
+      return bookings;
+  
+    } catch (error) {
+      console.error("Error in filterBooking:", error);
+      throw error;
+    }
+  }
+  
+  static async filterCustomers(filter: AgentCustomerFilter): Promise<void> {
+    try{
+      const { searchQuery, type } = filter;
+      let query: any = {};
+      console.log('Received filters:', { searchQuery, type });
+
+      switch(type){
+        case "all":
+          break;
+        case "withBooking":
+          const bookings = await User.find({ $gte : { bookings: 1 } });
+          break;
+        case "withoutBooking":
+          query.isAgentBooking = false;
+          break;
+      }
+
+      if(searchQuery && searchQuery.trim()){
+        query.name = { $regex: searchQuery.trim(), $options: 'i' };
+      }
+
+  }
+    catch(error){
+      throw new Error("Error in filterCustomers: " + (error as Error).message);
+    }
+  }
 }
 export { UserprofileService, AdminService };
 export default UserService;

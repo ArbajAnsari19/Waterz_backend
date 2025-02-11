@@ -1,5 +1,33 @@
 import { Request, Response } from 'express';
 import { UserprofileService, AdminService, Filter } from '../services/userServices';
+import { TimeFrame } from '../utils/trip';
+
+export interface EarningFilter {
+    timeframe: TimeFrame;
+    agentWise: string;
+}
+export interface AdminFilter {
+    searchName: string;
+    status: "All" | "RecentAdded" | "Requested";
+}
+export interface AgentFilterBooking {
+    bookedBy : "all" | "customer" | "agent",
+    searchName : string,
+    status : "all" | "pending" | "completed",
+}
+
+export interface AgentCustomerFilter {
+    searchQuery : string,
+    type : "all" | "withBooking" | "withoutBooking",
+}
+
+export interface ApprovedDetails {
+    sailingPeakTimePrice: number;
+    sailingNonPeakTimePrice: number;
+    anchoringPeakTimePrice: number;
+    anchoringNonPeakTimePrice: number;
+    approved: boolean;
+}
 
 export class userController {
 
@@ -150,7 +178,7 @@ export class userController {
     static async AgentDetail(req: Request, res: Response): Promise<void> {
         try {
             const agentId = req.params.id;
-            const user = await UserprofileService.meAgent(agentId);
+            const user = await UserprofileService.agentDetail(agentId);
             res.status(200).json({ message: 'meAgent' });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
@@ -172,7 +200,7 @@ export class userController {
              const userId = req.currentUser.id;
             const filter : Filter = {
                 status:req.body.status,
-                agentWise:req.body.agent,
+                agentWise:req.body.agentWise,
             } 
             const allAgents = await UserprofileService.listFilteredAgent(userId,filter);
             res.status(200).json({ allAgents });
@@ -181,14 +209,20 @@ export class userController {
         }
     }
 
-    // static paymentDetail = async (req: Request, res: Response): Promise<void> => {
-    //     try {
-    //         const paymentDetails = await UserprofileService.paymentDetail(req.currentUser.id);
-    //         res.status(200).json({ paymentDetails });
-    //     } catch (error) {
-    //         res.status(500).json({ message: (error as Error).message });
-    //     }
-    // }
+    static async listFilteredEarnings(req: Request, res: Response): Promise<void> {
+        try {
+            const userId = req.currentUser.id;
+            const filter : EarningFilter = {
+                timeframe:req.body.timeframe,
+                agentWise:req.body.agentWise,
+            } 
+            const allAgents = await UserprofileService.listFilteredEarnings(userId,filter);
+            res.status(200).json({ allAgents });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
 }
 
 
@@ -285,5 +319,70 @@ export class adminController{
             res.status(500).json({ message: (error as Error).message });
         }
     }
-    
+
+    static async filterYatchs(req: Request, res: Response): Promise<void> {
+        try {
+            const filter:AdminFilter = {
+                searchName:req.body.searchName,
+                status:req.body.status,
+            };
+            const yatchs = await AdminService.filterYatchs(filter);
+            res.status(200).json({ yatchs });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async yatchRequestDetails(req: Request, res: Response): Promise<void> {
+        try {
+            const yatchId = req.params.yatchId;
+            const yatchs = await AdminService.yatchRequestDetails(yatchId);
+            res.status(200).json({ yatchs });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async isApprovedYatch(req: Request, res: Response): Promise<void> {
+        try {
+            const yatchId = req.params.yatchId;
+            const updateDetails : ApprovedDetails = {
+                sailingPeakTimePrice :req.body.sailingPeakTimePrice,
+                sailingNonPeakTimePrice :req.body.sailingNonPeakTimePrice,
+                anchoringPeakTimePrice :req.body.anchoringPeakTimePrice,
+                anchoringNonPeakTimePrice :req.body.anchoringNonPeakTimePrice,
+                approved : req.body.approved,
+            }
+            const yatchs = await AdminService.isApprovedYatch(updateDetails,yatchId);
+            res.status(200).json({ yatchs });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async filterBookings(req: Request, res: Response): Promise<void> {
+        try {
+            const filters : AgentFilterBooking = {
+                bookedBy:req.body.bookedBy,
+                searchName:req.body.searchName,
+                status:req.body.status,};
+            const yatchs = await AdminService.filteredBooking(filters);
+            res.status(200).json({ yatchs });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async filterCustomers(req: Request, res: Response): Promise<void> {
+        try {
+            const filter:AgentCustomerFilter = {
+                searchQuery:req.body.searchQuery,
+                type:req.body.type,
+            };
+            const customers = await AdminService.filterCustomers(filter);
+            res.status(200).json({ customers });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
 }

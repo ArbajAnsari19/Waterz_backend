@@ -75,7 +75,7 @@ class PaymentService {
     await payment.save();
 
     // Fetch user and owner details
-    const user = await User.findById(booking.user);
+    const usermail = booking.customerEmail;
     const yacht = await Yacht.findById(booking.yacht);
     if (!yacht || !yacht.owner) {
       throw new Error("Yacht or yacht owner reference not found");
@@ -104,10 +104,10 @@ class PaymentService {
       throw new Error('Failed to update owner bookings');
     }
     
-    await PaymentService.createCalendarEvent(user,owner,booking);
+    await PaymentService.createCalendarEvent(usermail,owner,booking);
 
     // Send email notifications
-    await PaymentService.sendEmailNotification(user!.email, booking);
+    await PaymentService.sendEmailNotification(usermail, booking);
     await PaymentService.sendEmailNotification(owner!.email, booking);
 
   }

@@ -16,7 +16,7 @@ router.get("/listAll",authenticateToken,authenticateAgent, YatchController.listA
 router.get("/yatch-detail/:id",authenticateToken,authenticateAgent, YatchController.detailYatch); 
 router.post("/search-Yatch",authenticateToken,authenticateAgent, BookingController.serchIdealYatchs); 
 router.post("/create-booking/:id",authenticateToken,authenticateAgent, BookingController.createAgentBooking); 
-
+router.post("/create-booking/multiple",authenticateToken,authenticateAgent, BookingController.createAgentBookingWithMultipleYatchs);
 
 
 export default router;

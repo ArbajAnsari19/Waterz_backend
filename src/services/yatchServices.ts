@@ -153,28 +153,6 @@ class YatchService {
         }
     }
 
-    static async findNearbyYachts(longitude: number, latitude: number, maxDistance: number, page: number, limit: number): Promise<IYacht[]> {
-      try {
-        const yachts = await Yacht.find({
-          location: {
-            $near: {
-              $geometry: {
-                type: "Point",
-                coordinates: [longitude, latitude]
-              },
-              $maxDistance: maxDistance
-            }
-          }
-        })
-        .skip((page - 1) * limit)
-        .limit(limit);
-  
-        return yachts;
-      } catch (error) {
-        throw new Error((error as Error).message);
-      }
-    }
-
     static async findYachtsByOwner(owner: string): Promise<IYacht[]> {
         try {
           return await Yacht.find({ owner : owner });
