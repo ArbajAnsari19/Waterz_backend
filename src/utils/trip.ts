@@ -1,29 +1,35 @@
-export const TRIP_COMBINATIONS = [
-    {
-      id: '2-hours',
-      label: '2 Hours Trip',
-      options: [
-        { sailing: 1, anchorage: 1, label: '1hr sailing + 1hr anchorage' },
-        { sailing: 1.5, anchorage: 0.5, label: '1.5hrs sailing + 0.5hr anchorage' },
-        { sailing: 2, anchorage: 0, label: '2hrs sailing' }
-      ]
-    },
-    {
-      id: '3-hours',
-      label: '3 Hours Trip',
-      options: [
-        { sailing: 2, anchorage: 1, label: '2hrs sailing + 1hr anchorage' },
-        { sailing: 1.5, anchorage: 1.5, label: '1.5hrs sailing + 1.5hrs anchorage' },
-        { sailing: 2.5, anchorage: 0.5, label: '2.5hrs sailing + 0.5hr anchorage' }
-      ]
-    },
-    {
-      id: '4-hours',
-      label: '4 Hours Trip',
-      options: [
-        { sailing: 2, anchorage: 2, label: '2hrs sailing + 2hrs anchorage' }, 
-        { sailing: 3, anchorage: 1, label: '3hrs sailing + 1hr anchorage' },
-        { sailing: 3.5, anchorage: 0.5, label: '3.5hrs sailing + 0.5hr anchorage' }
-      ]
-    }
-  ];
+
+export enum PackageType {
+  PACKAGE_2HR_1 = "1_hour_sailing_1_hour_anchorage",
+  PACKAGE_2HR_2 = "1.5_hours_sailing_0.5_hour_anchorage",
+  PACKAGE_2HR_3 = "2_hours_sailing_0_hour_anchorage",
+  
+  PACKAGE_3HR_1 = "2_hours_sailing_1_hour_anchorage",
+  PACKAGE_3HR_2 = "1.5_hours_sailing_1.5_hours_anchorage",
+  PACKAGE_3HR_3 = "2.5_hours_sailing_0.5_hour_anchorage",
+  
+  PACKAGE_4HR_1 = "2_hours_sailing_2_hours_anchorage",
+  PACKAGE_4HR_2 = "3_hours_sailing_1_hour_anchorage",
+  PACKAGE_4HR_3 = "3.5_hours_sailing_0.5_hour_anchorage"
+}
+
+export enum AddonService {
+  CATERING = "catering",
+  VINE_BAR = "vine_bar",
+  DRONE = "drone",
+  DECORATION = "decoration",
+  WATER_SPORTS = "water_sports"
+}
+
+export enum LocationType {
+  DUBAI_MARINA = "Dubai Marina",
+  PALM_JUMEIRAH = "Palm Jumeirah",
+  DUBAI_HARBOUR = "Dubai Harbour",
+  PORT_RASHID = "Port Rashid"
+}
+
+export enum TimeFrame {
+  TODAY = "today",
+  LAST_WEEK = "last_week",
+  LAST_MONTH = "last_month",
+}

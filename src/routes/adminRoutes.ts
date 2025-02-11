@@ -5,7 +5,21 @@ import { adminController } from "../controllers/userController";
 
 const router = express.Router();
 
+// admin Yatch Routes
 router.get("/getAllYatchs", authenticateToken, authenticateAdmin, adminController.getAllYatchs);
+router.post("/filtered-yatchs", authenticateToken, authenticateAdmin, adminController.filterYatchs);
+router.get("requested/yatch/:yatchId",authenticateToken,authenticateAdmin,adminController.yatchRequestDetails)
+router.get("/approve/yatch/:yatchId",authenticateToken,authenticateAdmin,adminController.isApprovedYatch)
+
+// admin Booking Routes
+router.post("/filtered-bookings", authenticateToken, authenticateAdmin, adminController.filterBookings);
+
+// admin customer Routes
+
+router.post("/filtered-customers", authenticateToken, authenticateAdmin, adminController.filterCustomers);
+
+
+
 router.get("/getAllOwners", authenticateToken, authenticateAdmin, adminController.getAllOwners);
 router.get("/getAllCustomers", authenticateToken, authenticateAdmin, adminController.getAllCustomers);
 router.get("/getAllBookings", authenticateToken, authenticateAdmin, adminController.getAllBookings);

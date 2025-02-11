@@ -13,6 +13,6 @@ router.get("/list-all-agent", authenticateToken, authenticateSuperAgent,userCont
 router.get("/agent-detail/:id", authenticateToken, authenticateSuperAgent,userController.AgentDetail);
 router.delete("/remove-agent/:id", authenticateToken, authenticateSuperAgent,userController.deleteAgent);
 router.post("/list-filtered-agent", authenticateToken, authenticateSuperAgent,userController.listFilteredAgent);
-// router.get("/payment-details", authenticateToken, authenticateSuperAgent,userController.paymentDetail);   
+router.post("/list-filtered-earnings", authenticateToken, authenticateSuperAgent,userController.listFilteredEarnings);
 
 export default router;

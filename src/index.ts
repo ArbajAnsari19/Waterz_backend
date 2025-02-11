@@ -4,7 +4,7 @@ import dotenv from "dotenv"
 import mongoose from "mongoose";
 import helmet from "helmet";
 import bodyParser from 'body-parser';
-import {customerRoutes,ownerRoutes, authRoutes, bookingRoutes,queryRoutes,paymentRoutes, adminRoutes, superAgentRoutes, agentRoutes }  from "./routes";
+import { customerRoutes,ownerRoutes, authRoutes,queryRoutes,paymentRoutes, adminRoutes, superAgentRoutes, agentRoutes }  from "./routes";
 
 
 dotenv.config()
@@ -13,6 +13,7 @@ app.use(express.json());
 app.use(bodyParser.json());
 const allowedOrigins = [
   'http://localhost:5173',
+  'http://localhost:5174',
   'http://wavezgoa.com',
   'http://localhost:5173',
   'https://wavezgoa.com',
@@ -43,7 +44,6 @@ app.use("/owner", ownerRoutes);
 app.use("agent",agentRoutes);
 app.use("/superagent",superAgentRoutes);
 app.use("/admin",adminRoutes);
-app.use("/booking",bookingRoutes);
 app.use("/query",queryRoutes)
 app.use("/payment",paymentRoutes) 
 
@@ -65,3 +65,5 @@ app.listen(PORT, () => {
   console.log(`Server running on ==> http://localhost:${PORT}`);
 });
 
+// Optimisation can be happend by populating bookings by Agent instead of Searching for all Booking and then finiding booking for Agent with superAgent.
+ 
