@@ -759,9 +759,10 @@ class UserService {
 }
 
 class AdminService {
+
   static async getAllYatchs(): Promise<IUser[]> {
     try {
-      return await User.find();
+      return await Yacht.find();
     } catch (error) {
       throw new Error("Error listing users: " + (error as Error).message);
     }
@@ -870,15 +871,15 @@ class AdminService {
   
       // Apply status filter
       switch(status) {
-        case "All":
+        case "all":
           // No filter needed for "All"
           break;
-        case "RecentAdded":
+        case "recent":
           const sevenDaysAgo = new Date();
           sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
           query.createdAt = { $gte: sevenDaysAgo };
           break;
-        case "Requested":
+        case "requests":
           query.isVerifiedByAdmin = { $in: [true, false] };
           break;
         default:

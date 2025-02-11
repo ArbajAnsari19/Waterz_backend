@@ -8,7 +8,7 @@ export interface EarningFilter {
 }
 export interface AdminFilter {
     searchName: string;
-    status: "All" | "RecentAdded" | "Requested";
+    status: "all" | "recent" | "requests";
 }
 export interface AgentFilterBooking {
     bookedBy : "all" | "customer" | "agent",
