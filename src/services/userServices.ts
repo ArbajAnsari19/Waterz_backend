@@ -879,7 +879,7 @@ class AdminService {
           sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
           query.createdAt = { $gte: sevenDaysAgo };
           break;
-        case "requests":
+        case "requested":
           query.isVerifiedByAdmin = { $in: [true, false] };
           break;
         default:
