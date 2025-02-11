@@ -961,20 +961,24 @@ class AdminService {
       switch(status) {
         case "all":
           break;
-        case "pending":
-          query.rideStatus = 'pending';
+        case "upcoming":
+          query.rideStatus = 'upcoming';
           break;
-        case "completed":
+        case "previous":
           query.rideStatus = 'completed';
           break;
         default:
           throw new Error(`Invalid status filter: ${status}`);
       }
   
-      // Apply name search if provided and not empty
-      if (searchName && searchName.trim()) {
-        query.name = { $regex: searchName.trim(), $options: 'i' };
-      }
+        // Then apply search query if provided
+        if (searchName && searchName.trim()) {
+          query.$or = [
+            { name: { $regex: searchName.trim(), $options: 'i' } },
+            { email: { $regex: searchName.trim(), $options: 'i' } },
+            { phone: { $regex: searchName.trim(), $options: 'i' } }
+          ];
+          }
   
       console.log('Final query:', JSON.stringify(query));
   
