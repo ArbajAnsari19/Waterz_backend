@@ -10,14 +10,15 @@ router.get("/getAllYatchs", authenticateToken, authenticateAdmin, adminControlle
 router.post("/filtered-yatchs", authenticateToken, authenticateAdmin, adminController.filterYatchs);
 router.get("requested/yatch/:yatchId",authenticateToken,authenticateAdmin,adminController.yatchRequestDetails)
 router.get("/approve/yatch/:yatchId",authenticateToken,authenticateAdmin,adminController.isApprovedYatch)
-
 // admin Booking Routes
 router.post("/filtered-bookings", authenticateToken, authenticateAdmin, adminController.filterBookings);
-
 // admin customer Routes
-
 router.post("/filtered-customers", authenticateToken, authenticateAdmin, adminController.filterCustomers);
+router.delete("/delete-customer/:customerId", authenticateToken, authenticateAdmin, adminController.deleteCustomer);
 
+router.post("/filtered-agent", authenticateToken, authenticateAdmin, adminController.filterAgents);
+
+router.get("/getFilteredSuperAgents", authenticateToken, authenticateAdmin, adminController.filterSuperAgents);
 
 
 router.get("/getAllOwners", authenticateToken, authenticateAdmin, adminController.getAllOwners);
@@ -25,7 +26,6 @@ router.get("/getAllCustomers", authenticateToken, authenticateAdmin, adminContro
 router.get("/getAllBookings", authenticateToken, authenticateAdmin, adminController.getAllBookings);
 router.get("/getAllQueries", authenticateToken, authenticateAdmin, adminController.getAllQueries);
 router.get("/getAllPayments", authenticateToken, authenticateAdmin, adminController.getAllPayments);
-router.get("/getAllSuperAgents", authenticateToken, authenticateAdmin, adminController.getAllSuperAgents);
 router.get("/getAllAgents", authenticateToken, authenticateAdmin, adminController.getAllAgents);
 router.get("/getAllPayments", authenticateToken, authenticateAdmin, adminController.getAllPayments);
 router.get("/yatchOwner", authenticateToken, authenticateAdmin, adminController.getYatchOwner);

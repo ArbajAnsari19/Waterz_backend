@@ -10,17 +10,24 @@ export interface AdminFilter {
     searchName: string;
     status: "All" | "RecentAdded" | "Requested";
 }
-export interface AgentFilterBooking {
+export interface AdminFilterBooking {
     bookedBy : "all" | "customer" | "agent",
     searchName : string,
     status : "all" | "pending" | "completed",
 }
 
-export interface AgentCustomerFilter {
+export interface AdminCustomerFilter {
     searchQuery : string,
     type : "all" | "withBooking" | "withoutBooking",
 }
 
+export interface AdminSuperAgentFilter {
+    searchQuery : string,
+}
+
+export interface AdminEarningFilter{
+    period : "total" | "today" | "lastWeek" | "lastMonth",
+}
 export interface ApprovedDetails {
     sailingPeakTimePrice: number;
     sailingNonPeakTimePrice: number;
@@ -362,7 +369,7 @@ export class adminController{
 
     static async filterBookings(req: Request, res: Response): Promise<void> {
         try {
-            const filters : AgentFilterBooking = {
+            const filters : AdminFilterBooking = {
                 bookedBy:req.body.bookedBy,
                 searchName:req.body.searchName,
                 status:req.body.status,};
@@ -375,12 +382,69 @@ export class adminController{
 
     static async filterCustomers(req: Request, res: Response): Promise<void> {
         try {
-            const filter:AgentCustomerFilter = {
+            const filter : AdminCustomerFilter = {
                 searchQuery:req.body.searchQuery,
                 type:req.body.type,
             };
             const customers = await AdminService.filterCustomers(filter);
             res.status(200).json({ customers });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async bookingDetails(req: Request, res: Response): Promise<void> {
+        try {
+            const bookingId = req.params.bookingId;
+            const booking = await AdminService.bookingDetails(bookingId);
+            res.status(200).json({ booking });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async deleteCustomer(req: Request, res: Response): Promise<void> {
+        try {
+            const customerId = req.params.customerId;
+            const customer = await AdminService.deleteCustomer(customerId);
+            res.status(200).json({ customer });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async filterAgents(req: Request, res: Response): Promise<void> {
+        try {
+            const filter : AdminCustomerFilter = {
+                searchQuery:req.body.searchQuery,
+                type:req.body.type,
+            } 
+            const allAgents = await AdminService.filterAgents(filter);
+            res.status(200).json({ allAgents });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async filterSuperAgents(req: Request, res: Response): Promise<void> {
+        try {
+            const filter : AdminSuperAgentFilter = {
+                searchQuery:req.body.searchQuery,
+            } 
+            const allSuperAgents = await AdminService.filterSuperAgents(filter);
+            res.status(200).json({ allSuperAgents });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async filterEarnings(req: Request, res: Response): Promise<void> {
+        try {
+            const filter : AdminEarningFilter = {
+                period:req.body.period,
+            } 
+            const allEarnings = await AdminService.filterEarnings(filter);
+            res.status(200).json({ allEarnings });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }

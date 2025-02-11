@@ -7,7 +7,7 @@ import {findRoleById} from "../utils/role";
 import Yacht, { IYacht } from "../models/Yacht";
 import Booking, {IBooking} from "../models/Booking"; 
 import { EarningFilter } from "../controllers/userController";
-import {AdminFilter,ApprovedDetails,AgentFilterBooking,AgentCustomerFilter} from "../controllers/userController";
+import {AdminFilter,ApprovedDetails,AdminFilterBooking,AdminCustomerFilter,AdminSuperAgentFilter,AdminEarningFilter} from "../controllers/userController";
 
 dotenv.config();
 const OTP_JWT_SECRET = process.env.OTP_JWT_SECRET as string;
@@ -809,7 +809,7 @@ class AdminService {
 
   static async getAllSuperAgents(): Promise<IUser[]> {
     try {
-      return await User.find();
+      return await SuperAgent.find();
     } catch (error) {
       throw new Error("Error listing super agents: " + (error as Error).message);
     }
@@ -935,7 +935,7 @@ class AdminService {
     }
   }
 
-  static async filteredBooking(filter: AgentFilterBooking): Promise<IBooking[]> {
+  static async filteredBooking(filter: AdminFilterBooking): Promise<IBooking[]> {
     try {
       const { status, searchName, bookedBy } = filter;
       let query: any = {};
@@ -988,30 +988,205 @@ class AdminService {
     }
   }
   
-  static async filterCustomers(filter: AgentCustomerFilter): Promise<void> {
-    try{
+  static async filterCustomers(filter: AdminCustomerFilter): Promise<IUser[]> {
+    try {
       const { searchQuery, type } = filter;
       let query: any = {};
+      
       console.log('Received filters:', { searchQuery, type });
-
-      switch(type){
+  
+      // Apply type filter
+      switch(type) {
         case "all":
           break;
         case "withBooking":
-          const bookings = await User.find({ $gte : { bookings: 1 } });
+          query.bookings = { $exists: true, $not: { $size: 0 } };
           break;
         case "withoutBooking":
-          query.isAgentBooking = false;
+          query.bookings = { $size: 0 };
           break;
+        default:
+          throw new Error(`Invalid filter type: ${type}`);
       }
-
-      if(searchQuery && searchQuery.trim()){
+  
+      // Apply name search if provided
+      if (searchQuery && searchQuery.trim()) {
         query.name = { $regex: searchQuery.trim(), $options: 'i' };
       }
-
+  
+      console.log('Final query:', JSON.stringify(query));
+  
+      const customers = await User.find(query)
+        .sort({ createdAt: -1 });
+  
+      return customers;
+  
+    } catch (error) {
+      console.error("Error in filterCustomers:", error);
+      throw new Error(`Error in filterCustomers: ${(error as Error).message}`);
+    }
   }
-    catch(error){
-      throw new Error("Error in filterCustomers: " + (error as Error).message);
+
+  static async bookingDetails(bookingId: string): Promise<IBooking | null> {
+    try {
+      return await Booking.findById(bookingId);
+    } catch (error) {
+      throw new Error("Error getting booking details: " + (error as Error).message);
+    }
+  }
+
+  static async deleteCustomer(customerId: string): Promise<IUser | null> {
+    try {
+      return await User.findByIdAndDelete(customerId);
+    } catch (error) {
+      throw new Error("Error deleting customer: " + (error as Error).message);
+    }
+  }
+
+  static async filterAgents(filter: AdminCustomerFilter): Promise<IAgent[]> {
+    try {
+      const { searchQuery, type } = filter;
+      let query: any = {};
+      
+      console.log('Received filters:', { searchQuery, type });
+  
+      // Apply type filter
+      switch(type) {
+        case "all":
+          break;
+        case "withBooking":
+          query.bookings = { $exists: true, $not: { $size: 0 } };
+          break;
+        case "withoutBooking":
+          query.bookings = { $size: 0 };
+          break;
+        default:
+          throw new Error(`Invalid filter type: ${type}`);
+      }
+  
+      // Apply name search if provided
+      if (searchQuery && searchQuery.trim()) {
+        query.name = { $regex: searchQuery.trim(), $options: 'i' };
+      }
+  
+      console.log('Final query:', JSON.stringify(query));
+  
+      const agents = await Agent.find(query)
+        .sort({ createdAt: -1 });
+      return agents;
+  
+    } catch (error) {
+      console.error("Error in filterAgents:", error);
+      throw new Error(`Error in filterAgents: ${(error as Error).message}`);
+    }
+  }
+
+  static async filterSuperAgents(filter: AdminSuperAgentFilter): Promise<ISuperAgent[]> {
+    try {
+      const { searchQuery } = filter;
+      let query: any = {};
+      
+      console.log('Received filters:', { searchQuery });
+  
+  
+      // Apply name search if provided
+      if (searchQuery && searchQuery.trim()) {
+        query.name = { $regex: searchQuery.trim(), $options: 'i' };
+      }
+  
+      console.log('Final query:', JSON.stringify(query));
+  
+      const superAgents = await SuperAgent.find(query)
+        .sort({ createdAt: -1 });
+  
+      return superAgents;
+  
+    } catch (error) {
+      console.error("Error in filterSuperAgents:", error);
+      throw new Error(`Error in filterSuperAgents: ${(error as Error).message}`);
+    }
+  }
+
+  static async filterEarnings(filter: AdminEarningFilter): Promise<{totalBookings: number, totalEarning: number}> {
+    try {
+      const { period } = filter;
+      let dateQuery: any = {};
+      
+      // Set date range based on period
+      const now = new Date();
+      switch(period) {
+        case "today":
+          dateQuery = {
+            createdAt: {
+              $gte: new Date(now.setHours(0, 0, 0, 0)),
+              $lte: new Date(now.setHours(23, 59, 59, 999))
+            }
+          };
+          break;
+        case "lastWeek":
+          const lastWeek = new Date(now);
+          lastWeek.setDate(lastWeek.getDate() - 7);
+          dateQuery = {
+            createdAt: {
+              $gte: lastWeek,
+              $lte: now
+            }
+          };
+          break;
+        case "lastMonth":
+          const lastMonth = new Date(now);
+          lastMonth.setMonth(lastMonth.getMonth() - 1);
+          dateQuery = {
+            createdAt: {
+              $gte: lastMonth,
+              $lte: now
+            }
+          };
+          break;
+        case "total":
+          // No date filter for total
+          break;
+        default:
+          throw new Error(`Invalid period filter: ${period}`);
+      }
+  
+      // Get completed bookings with payment
+      const query = {
+        ...dateQuery,
+        status: 'confirmed',
+        paymentStatus: 'completed'
+      };
+  
+      console.log('Final query:', JSON.stringify(query));
+  
+      // Aggregate bookings data
+      const result = await Booking.aggregate([
+        { $match: query },
+        {
+          $group: {
+            _id: null,
+            totalBookings: { $sum: 1 },
+            totalEarning: { $sum: "$totalAmount" }
+          }
+        }
+      ]);
+  
+      // Return default values if no bookings found
+      if (!result.length) {
+        return {
+          totalBookings: 0,
+          totalEarning: 0
+        };
+      }
+  
+      return {
+        totalBookings: result[0].totalBookings,
+        totalEarning: result[0].totalEarning
+      };
+  
+    } catch (error) {
+      console.error("Error in filterEarnings:", error);
+      throw new Error(`Error in filterEarnings: ${(error as Error).message}`);
     }
   }
 }
