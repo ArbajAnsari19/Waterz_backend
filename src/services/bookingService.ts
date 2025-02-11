@@ -102,6 +102,8 @@ class BookingService {
           startDate: startDateTime,
           startTime: startDateTime,
           endDate: endDateTime,
+          name : yachtDetails.name,
+          images : yachtDetails.images,
           YachtType: yachtDetails.YachtType,
           capacity: yachtDetails.capacity,
           customerName: userDetails.name,
@@ -230,6 +232,9 @@ class BookingService {
           return yacht;
         })
       );
+      const yachtNames = yachtDetails.map(yacht => yacht.name);
+      const yachtImages = yachtDetails.map(yacht => yacht.images).flat();
+      const numberOfYachts = yachtDetails.length;
     // Extract package times
     const getPackageDuration = (packageType: PackageType): { sailingHours: number, anchorageHours: number } => {
       const [sailing, anchoring] = packageType.split('_hour').map(part => {
@@ -303,6 +308,9 @@ class BookingService {
       ...BookingDetails,
       user,
       yachts,
+      names: yachtNames,         // Add yacht names
+      images: yachtImages,       // Add yacht images
+      noOfYatchs: numberOfYachts, // Add number of yachts
       bookingDateTime: new Date(),
       location,
       packages,
@@ -359,7 +367,6 @@ class BookingService {
         user, 
         yacht,
       } = BookingDetails;
-      const { customerName, customerPhone, customerEmail } = customerData;
 
     // Find yacht
     const yachtDetails = await Yacht.findById(yacht);
@@ -437,6 +444,8 @@ class BookingService {
         YachtType: yachtDetails.YachtType,
         capacity: yachtDetails.capacity,
         PeopleNo,
+        name : yachtDetails.name,
+        images : yachtDetails.images,
         isAgentBooking: true,
         totalAmount: discountedAmount,
         customerName: customerData.customerName,

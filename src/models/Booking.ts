@@ -21,6 +21,8 @@ export interface IBooking extends mongoose.Document {
   startDate: Date;
   startTime: Date;
   endDate: Date;
+  images: string[];
+  name: string;
   YachtType: string;
   capacity: number;
   PeopleNo: number;
@@ -38,7 +40,9 @@ export interface IBooking extends mongoose.Document {
 }
 
 export interface IBookingAgent extends Omit<IBooking, 'yacht'> {
-  yachts: string[];  
+  yachts: string[];
+  names: string[];
+  images: string[]; 
   noOfYatchs: number;
   customerName: string;
   customerPhone: string;
@@ -66,6 +70,8 @@ const bookingSchema = new mongoose.Schema({
   startDate: { type: Date, required: true },
   startTime: { type: Date, required: true },
   endDate: { type: Date, required: true },
+  images: { type: [String], required: true },
+  name: { type: String, required: true },
   YachtType: { type: String, required: false },
   addonServices: [{
     service: {
