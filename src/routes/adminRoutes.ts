@@ -17,8 +17,7 @@ router.delete("/delete-customer/:customerId", authenticateToken, authenticateAdm
 router.post("/filtered-agent", authenticateToken, authenticateAdmin, adminController.filterAgents);
 router.get("/getFilteredSuperAgents", authenticateToken, authenticateAdmin, adminController.filterSuperAgents);
 router.post("/filtered-Earning", authenticateToken, authenticateAdmin, adminController.filterEarnings);
-
-
+router.get("/adminNavbar", authenticateToken, authenticateAdmin, adminController.adminNavbar);
 router.get("/getAllOwners", authenticateToken, authenticateAdmin, adminController.getAllOwners);
 router.post("/getAllCustomers", authenticateToken, authenticateAdmin, adminController.getAllCustomers);
 router.post("/getAllBookings", authenticateToken, authenticateAdmin, adminController.getAllBookings);
@@ -31,5 +30,5 @@ router.post("/getAllAgents", authenticateToken, authenticateAdmin, adminControll
 router.post("/getAllPayments", authenticateToken, authenticateAdmin, adminController.getAllPayments);
 router.get("/yatchOwner", authenticateToken, authenticateAdmin, adminController.getYatchOwner);
 router.get("/owners-Booking", authenticateToken, authenticateAdmin, adminController.getAllBookingByOwner);
- 
+
 export default router;

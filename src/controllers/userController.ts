@@ -449,4 +449,13 @@ export class adminController{
             res.status(500).json({ message: (error as Error).message });
         }
     }
+
+    static async adminNavbar(req: Request, res: Response): Promise<void> {
+        try {
+            const navbar = await AdminService.adminNavbar();
+            res.status(200).json({ navbar });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
 }

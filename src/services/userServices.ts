@@ -1194,6 +1194,76 @@ class AdminService {
       throw new Error(`Error in filterEarnings: ${(error as Error).message}`);
     }
   }
+  
+  static async adminNavbar(): Promise<{
+    weekly: { current: number; lastWeek: number; percentageChange: number };
+    monthly: { current: number; lastMonth: number; percentageChange: number };
+    yearly: { current: number; lastYear: number; percentageChange: number };
+  }> {
+    try {
+      const now = new Date();
+      const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+      const startOfLastWeek = new Date(now.setDate(now.getDate() - 7));
+      
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const startOfLastYear = new Date(now.getFullYear() - 1, 0, 1);
+  
+      // Get weekly bookings
+      const thisWeekBookings = await Booking.countDocuments({
+        createdAt: { $gte: startOfWeek }
+      });
+      const lastWeekBookings = await Booking.countDocuments({
+        createdAt: { $gte: startOfLastWeek, $lt: startOfWeek }
+      });
+  
+      // Get monthly bookings
+      const thisMonthBookings = await Booking.countDocuments({
+        createdAt: { $gte: startOfMonth }
+      });
+      const lastMonthBookings = await Booking.countDocuments({
+        createdAt: { $gte: startOfLastMonth, $lt: startOfMonth }
+      });
+  
+      // Get yearly bookings
+      const thisYearBookings = await Booking.countDocuments({
+        createdAt: { $gte: startOfYear }
+      });
+      const lastYearBookings = await Booking.countDocuments({
+        createdAt: { $gte: startOfLastYear, $lt: startOfYear }
+      });
+  
+      // Calculate percentage changes
+      const weeklyPercentage = ((thisWeekBookings - lastWeekBookings) / lastWeekBookings) * 100 || 0;
+      const monthlyPercentage = ((thisMonthBookings - lastMonthBookings) / lastMonthBookings) * 100 || 0;
+      const yearlyPercentage = ((thisYearBookings - lastYearBookings) / lastYearBookings) * 100 || 0;
+  
+      return {
+        weekly: {
+          current: thisWeekBookings,
+          lastWeek: lastWeekBookings,
+          percentageChange: Number(weeklyPercentage.toFixed(2))
+        },
+        monthly: {
+          current: thisMonthBookings,
+          lastMonth: lastMonthBookings,
+          percentageChange: Number(monthlyPercentage.toFixed(2))
+        },
+        yearly: {
+          current: thisYearBookings,
+          lastYear: lastYearBookings,
+          percentageChange: Number(yearlyPercentage.toFixed(2))
+        }
+      };
+  
+    } catch (error) {
+      console.error("Error in adminNavbarDetails:", error);
+      throw new Error(`Error in adminNavbarDetails: ${(error as Error).message}`);
+    }
+  }
+
 }
 export { UserprofileService, AdminService };
 export default UserService;
