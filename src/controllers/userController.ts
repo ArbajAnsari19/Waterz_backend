@@ -20,6 +20,12 @@ export interface AdminCustomerFilter {
     searchQuery : string,
     type : "all" | "withBooking" | "withoutBooking",
 }
+export interface AdminDashboardFilter {
+    bookingView: 'thisYear' | 'overall';
+    earningView: 'thisYear' | 'overall';
+    bookingdistributionView: 'thisYear' | 'thisMonth';
+    earningdistributionView: 'thisYear' | 'thisMonth';
+  }
 
 export interface AdminSuperAgentFilter {
     searchQuery : string,
@@ -454,6 +460,21 @@ export class adminController{
         try {
             const navbar = await AdminService.adminNavbar();
             res.status(200).json({ navbar });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async getAdminDashboard(req: Request, res: Response): Promise<void> {
+        try {
+            const filter : AdminDashboardFilter = {
+                bookingView:req.body.bookingView,
+                earningView:req.body.earningView,
+                bookingdistributionView:req.body.bookingdistributionView,
+                earningdistributionView:req.body.earningdistributionView,
+            }
+            const dashboard = await AdminService.getAdminDashboard(filter);
+            res.status(200).json({ dashboard });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }

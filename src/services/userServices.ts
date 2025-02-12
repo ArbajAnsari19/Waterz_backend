@@ -7,7 +7,7 @@ import {findRoleById} from "../utils/role";
 import Yacht, { IYacht } from "../models/Yacht";
 import Booking, {IBooking} from "../models/Booking"; 
 import { EarningFilter } from "../controllers/userController";
-import {AdminFilter,ApprovedDetails,AdminFilterBooking,AdminCustomerFilter,AdminSuperAgentFilter,AdminEarningFilter} from "../controllers/userController";
+import {AdminFilter,ApprovedDetails,AdminFilterBooking,AdminCustomerFilter,AdminSuperAgentFilter,AdminEarningFilter,AdminDashboardFilter} from "../controllers/userController";
 
 dotenv.config();
 const OTP_JWT_SECRET = process.env.OTP_JWT_SECRET as string;
@@ -16,6 +16,48 @@ export interface IUserAuthInfo {
   user: IUser | IAdmin;
   token: string;
 }
+
+interface BookingDataPoint {
+  month: string;
+  totalBookings: number;
+  customerBookings: number;
+  agentBookings: number;
+  year?: string;
+}
+
+interface EarningDataPoint {
+  month: string;
+  amount: number;
+  year?: string;
+}
+
+interface DashboardResponse {
+  bookings: {
+    data: BookingDataPoint[];
+    total: number;
+    byCustomer: number;
+    byAgent: number;
+  };
+  earnings: {
+    data: EarningDataPoint[];
+    total: number;
+  };
+  distribution: {
+    bookings: {
+      customerPercentage: number;
+      agentPercentage: number;
+      customerValue: number;
+      agentValue: number;
+    };
+    earnings: {
+      customerPercentage: number;
+      agentPercentage: number;
+      customerValue: number;
+      agentValue: number;
+    };
+  };
+}
+
 
 export interface Filter {
   status: "pending" | "completed"
@@ -1278,6 +1320,204 @@ class AdminService {
     } catch (error) {
       console.error("Error in adminNavbarDetails:", error);
       throw new Error(`Error in adminNavbarDetails: ${(error as Error).message}`);
+    }
+  }
+
+  static async getAdminDashboard(filters: AdminDashboardFilter): Promise<DashboardResponse> {
+    try {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const currentYear = new Date().getFullYear();
+      const years = [currentYear, currentYear + 1, currentYear + 2, currentYear + 3];
+      const currentMonth = new Date().getMonth();
+  
+      // Date range helper
+      const getDateRange = (view: 'thisYear' | 'thisMonth') => {
+        if (view === 'thisYear') {
+          return {
+            start: new Date(currentYear, 0, 1),
+            end: new Date(currentYear, 11, 31)
+          };
+        }
+        return {
+          start: new Date(currentYear, currentMonth, 1),
+          end: new Date(currentYear, currentMonth + 1, 0)
+        };
+      };
+  
+      // Get date ranges
+      const bookingRange = getDateRange(filters.bookingdistributionView);
+      const earningRange = getDateRange(filters.earningdistributionView);
+  
+      // Calculate booking data
+      const bookingData = await Promise.all(
+        (filters.bookingView === 'thisYear' ? months : years.flatMap(year => 
+          months.map(month => ({ month, year: year.toString() }))
+        )).map(async (monthData) => {
+          const monthIndex = typeof monthData === 'string' ? 
+            months.indexOf(monthData) : 
+            months.indexOf(monthData.month);
+          const year = typeof monthData === 'string' ? 
+            currentYear : 
+            parseInt(monthData.year);
+          
+          const startDate = new Date(year, monthIndex, 1);
+          const endDate = new Date(year, monthIndex + 1, 0);
+  
+          const [totalBookings, customerBookings, agentBookings] = await Promise.all([
+            Booking.countDocuments({
+              createdAt: { $gte: startDate, $lte: endDate },
+              status: 'confirmed'
+            }),
+            Booking.countDocuments({
+              createdAt: { $gte: startDate, $lte: endDate },
+              bookingType: 'customer',
+              status: 'confirmed'
+            }),
+            Booking.countDocuments({
+              createdAt: { $gte: startDate, $lte: endDate },
+              bookingType: 'agent',
+              status: 'confirmed'
+            })
+          ]);
+  
+          return {
+            month: typeof monthData === 'string' ? monthData : `${monthData.month} ${monthData.year}`,
+            totalBookings,
+            customerBookings,
+            agentBookings,
+            ...(typeof monthData !== 'string' && { year: monthData.year })
+          };
+        })
+      );
+  
+      // Calculate earning data
+      const earningData = await Promise.all(
+        (filters.earningView === 'thisYear' ? months : years.flatMap(year => 
+          months.map(month => ({ month, year: year.toString() }))
+        )).map(async (monthData) => {
+          const monthIndex = typeof monthData === 'string' ? 
+            months.indexOf(monthData) : 
+            months.indexOf(monthData.month);
+          const year = typeof monthData === 'string' ? 
+            currentYear : 
+            parseInt(monthData.year);
+  
+          const startDate = new Date(year, monthIndex, 1);
+          const endDate = new Date(year, monthIndex + 1, 0);
+  
+          const result = await Booking.aggregate([
+            {
+              $match: {
+                createdAt: { $gte: startDate, $lte: endDate },
+                status: 'confirmed',
+                paymentStatus: 'completed'
+              }
+            },
+            {
+              $group: {
+                _id: null,
+                amount: { $sum: "$totalAmount" }
+              }
+            }
+          ]);
+  
+          return {
+            month: typeof monthData === 'string' ? monthData : `${monthData.month} ${monthData.year}`,
+            amount: result.length ? result[0].amount : 0,
+            ...(typeof monthData !== 'string' && { year: monthData.year })
+          };
+        })
+      );
+  
+      // Calculate distributions
+      const [bookingDist, earningDist] = await Promise.all([
+        Booking.aggregate([
+          {
+            $match: {
+              createdAt: { 
+                $gte: bookingRange.start, 
+                $lte: bookingRange.end 
+              },
+              status: 'confirmed'
+            }
+          },
+          {
+            $group: {
+              _id: "$bookingType",
+              count: { $sum: 1 }
+            }
+          }
+        ]),
+        Booking.aggregate([
+          {
+            $match: {
+              createdAt: { 
+                $gte: earningRange.start, 
+                $lte: earningRange.end 
+              },
+              status: 'confirmed',
+              paymentStatus: 'completed'
+            }
+          },
+          {
+            $group: {
+              _id: "$bookingType",
+              total: { $sum: "$totalAmount" }
+            }
+          }
+        ])
+      ]);
+  
+      // Calculate totals
+      const totalBookings = bookingData.reduce((sum, item) => sum + item.totalBookings, 0);
+      const totalCustomerBookings = bookingData.reduce((sum, item) => sum + item.customerBookings, 0);
+      const totalAgentBookings = bookingData.reduce((sum, item) => sum + item.agentBookings, 0);
+      const totalEarnings = earningData.reduce((sum, item) => sum + item.amount, 0);
+  
+      // Process distribution data
+      const bookingDistObj = bookingDist.reduce((acc, item) => {
+        acc[item._id] = item.count;
+        return acc;
+      }, {} as Record<string, number>);
+  
+      const earningDistObj = earningDist.reduce((acc, item) => {
+        acc[item._id] = item.total;
+        return acc;
+      }, {} as Record<string, number>);
+  
+      const totalDistBookings = (bookingDistObj.customer || 0) + (bookingDistObj.agent || 0);
+      const totalDistEarnings = (earningDistObj.customer || 0) + (earningDistObj.agent || 0);
+  
+      return {
+        bookings: {
+          data: bookingData,
+          total: totalBookings,
+          byCustomer: totalCustomerBookings,
+          byAgent: totalAgentBookings
+        },
+        earnings: {
+          data: earningData,
+          total: totalEarnings
+        },
+        distribution: {
+          bookings: {
+            customerPercentage: Number(((bookingDistObj.customer || 0) / totalDistBookings * 100).toFixed(1)),
+            agentPercentage: Number(((bookingDistObj.agent || 0) / totalDistBookings * 100).toFixed(1)),
+            customerValue: bookingDistObj.customer || 0,
+            agentValue: bookingDistObj.agent || 0
+          },
+          earnings: {
+            customerPercentage: Number(((earningDistObj.customer || 0) / totalDistEarnings * 100).toFixed(1)),
+            agentPercentage: Number(((earningDistObj.agent || 0) / totalDistEarnings * 100).toFixed(1)),
+            customerValue: earningDistObj.customer || 0,
+            agentValue: earningDistObj.agent || 0
+          }
+        }
+      };
+  
+    } catch (error) {
+      console.error("Error in getAdminDashboard:", error);
+      throw new Error(`Error in getAdminDashboard: ${(error as Error).message}`);
     }
   }
 
