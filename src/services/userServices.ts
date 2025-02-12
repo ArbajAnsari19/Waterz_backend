@@ -1196,12 +1196,16 @@ class AdminService {
   }
   
   static async adminNavbar(): Promise<{
+    today: { count: number; percentageChange: number };
     weekly: { current: number; lastWeek: number; percentageChange: number };
     monthly: { current: number; lastMonth: number; percentageChange: number };
     yearly: { current: number; lastYear: number; percentageChange: number };
   }> {
     try {
       const now = new Date();
+      const startOfToday = new Date(now.setHours(0, 0, 0, 0));
+      const startofLastToday = new Date(now.setDate(now.getDate() - 1));
+
       const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
       const startOfLastWeek = new Date(now.setDate(now.getDate() - 7));
       
@@ -1210,7 +1214,15 @@ class AdminService {
       
       const startOfYear = new Date(now.getFullYear(), 0, 1);
       const startOfLastYear = new Date(now.getFullYear() - 1, 0, 1);
-  
+     
+      // Get today's bookings
+        const todayBookings = await Booking.countDocuments({
+          createdAt: { $gte: startOfToday }
+        });
+        const lastTodayBookings = await Booking.countDocuments({
+          createdAt: { $gte: startofLastToday, $lt: startOfToday }
+        });
+
       // Get weekly bookings
       const thisWeekBookings = await Booking.countDocuments({
         createdAt: { $gte: startOfWeek }
@@ -1236,11 +1248,16 @@ class AdminService {
       });
   
       // Calculate percentage changes
+      const daypercentage = ((todayBookings - lastTodayBookings) / lastTodayBookings) * 100 || 0;
       const weeklyPercentage = ((thisWeekBookings - lastWeekBookings) / lastWeekBookings) * 100 || 0;
       const monthlyPercentage = ((thisMonthBookings - lastMonthBookings) / lastMonthBookings) * 100 || 0;
       const yearlyPercentage = ((thisYearBookings - lastYearBookings) / lastYearBookings) * 100 || 0;
   
       return {
+        today: {
+          count: todayBookings,
+          percentageChange: Number(daypercentage.toFixed(2))
+        },
         weekly: {
           current: thisWeekBookings,
           lastWeek: lastWeekBookings,
