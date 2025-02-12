@@ -18,7 +18,7 @@ export interface AdminFilterBooking {
 
 export interface AdminCustomerFilter {
     searchQuery : string,
-    type : "all" | "withBooking" | "withoutBooking",
+    type : "all" | "withBookings" | "withoutBookings",
 }
 export interface AdminDashboardFilter {
     bookingView: 'thisYear' | 'overall';
@@ -425,8 +425,8 @@ export class adminController{
                 searchQuery:req.body.searchQuery,
                 type:req.body.type,
             } 
-            const allAgents = await AdminService.filterAgents(filter);
-            res.status(200).json({ allAgents });
+            const agents = await AdminService.filterAgents(filter);
+            res.status(200).json({ agents });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }
@@ -437,8 +437,8 @@ export class adminController{
             const filter : AdminSuperAgentFilter = {
                 searchQuery:req.body.searchQuery,
             } 
-            const allSuperAgents = await AdminService.filterSuperAgents(filter);
-            res.status(200).json({ allSuperAgents });
+            const superAgents = await AdminService.filterSuperAgents(filter);
+            res.status(200).json({ superAgents });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }
@@ -458,8 +458,8 @@ export class adminController{
 
     static async adminNavbar(req: Request, res: Response): Promise<void> {
         try {
-            const navbar = await AdminService.adminNavbar();
-            res.status(200).json({ navbar });
+            const analytics = await AdminService.adminNavbar();
+            res.status(200).json({ analytics });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }

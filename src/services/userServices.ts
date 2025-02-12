@@ -1046,10 +1046,10 @@ class AdminService {
       switch(type) {
         case "all":
           break;
-        case "withBooking":
+        case "withBookings":
           query.bookings = { $exists: true, $not: { $size: 0 } };
           break;
-        case "withoutBooking":
+        case "withoutBookings":
           query.bookings = { $size: 0 };
           break;
         default:
@@ -1101,10 +1101,10 @@ class AdminService {
       switch(type) {
         case "all":
           break;
-        case "withBooking":
+        case "withBookings":
           query.bookings = { $exists: true, $not: { $size: 0 } };
           break;
-        case "withoutBooking":
+        case "withoutBookings":
           query.bookings = { $size: 0 };
           break;
         default:
