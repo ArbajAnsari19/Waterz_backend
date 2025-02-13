@@ -922,7 +922,10 @@ class AdminService {
           query.createdAt = { $gte: sevenDaysAgo };
           break;
         case "requested":
-          query.isVerifiedByAdmin = { $in: [true, false] };
+          query.isVerifiedByAdmin = "requested";
+          break;
+        case "denied":
+          query.isVerifiedByAdmin = "denied";
           break;
         default:
           throw new Error(`Invalid status filter: ${status}`);
@@ -1016,9 +1019,9 @@ class AdminService {
         // Then apply search query if provided
         if (searchName && searchName.trim()) {
           query.$or = [
-            { name: { $regex: searchName.trim(), $options: 'i' } },
-            { email: { $regex: searchName.trim(), $options: 'i' } },
-            { phone: { $regex: searchName.trim(), $options: 'i' } }
+            { customerName: { $regex: searchName.trim(), $options: 'i' } },
+            { customerEmail: { $regex: searchName.trim(), $options: 'i' } },
+            { customerPhone: { $regex: searchName.trim(), $options: 'i' } }
           ];
           }
   

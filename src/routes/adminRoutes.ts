@@ -4,21 +4,20 @@ import { adminController } from "../controllers/userController";
 
 
 const router = express.Router();
-// admin Yatch Routes
+
 router.get("/getAllYatchs", authenticateToken, authenticateAdmin, adminController.getAllYatchs);
 router.post("/filtered-yatchs", authenticateToken, authenticateAdmin, adminController.filterYatchs);
 router.get("requested/yatch/:yatchId",authenticateToken,authenticateAdmin,adminController.yatchRequestDetails)
 router.get("/approve/yatch/:yatchId",authenticateToken,authenticateAdmin,adminController.isApprovedYatch)
-// admin Booking Routes
 router.post("/filtered-bookings", authenticateToken, authenticateAdmin, adminController.filterBookings);
-// admin customer Routes
 router.post("/filtered-customers", authenticateToken, authenticateAdmin, adminController.filterCustomers);
 router.delete("/delete-customer/:customerId", authenticateToken, authenticateAdmin, adminController.deleteCustomer);
 router.post("/filtered-agent", authenticateToken, authenticateAdmin, adminController.filterAgents);
 router.post("/getFilteredSuperAgents", authenticateToken, authenticateAdmin, adminController.filterSuperAgents);
 router.post("/filtered-Earning", authenticateToken, authenticateAdmin, adminController.filterEarnings);
 router.get("/analytics", adminController.adminNavbar);
-router.get("/getAdminDashboard", authenticateToken, authenticateAdmin, adminController.getAdminDashboard);
+router.post("/getAdminDashboard", authenticateToken, authenticateAdmin, adminController.getAdminDashboard);
+
 router.get("/getAllOwners", authenticateToken, authenticateAdmin, adminController.getAllOwners);
 router.post("/getAllCustomers", authenticateToken, authenticateAdmin, adminController.getAllCustomers);
 router.post("/getAllBookings", authenticateToken, authenticateAdmin, adminController.getAllBookings);

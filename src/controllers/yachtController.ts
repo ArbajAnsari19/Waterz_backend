@@ -107,7 +107,8 @@ export class YatchController {
             amenities,
             availability,
             price,
-            addonServices: addonServices || []
+            addonServices: addonServices || [],
+            isVerifiedByAdmin: 'requested',
           };
       
           const { yachtId } = await YatchService.createYatch(yachtDetails);

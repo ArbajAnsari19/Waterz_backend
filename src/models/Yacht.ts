@@ -11,6 +11,7 @@ export interface IYacht {
   owner: ObjectId;
   name: string;
   pickupat: string;
+  isVerifiedByAdmin: string;
   location: LocationType;
   description: string;
   price: {
@@ -39,6 +40,11 @@ export interface IYacht {
 export const yachtSchema = new mongoose.Schema<IYacht>({
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Owner', required: true }, // Yacht Owner
   name: { type: String, required: true },
+  isVerifiedByAdmin: { 
+    type: String, 
+    enum: ["accepted", "requested", "denied"], 
+    required: true 
+  },
   location: { 
     type: String, 
     enum: Object.values(LocationType),
