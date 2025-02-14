@@ -6,6 +6,16 @@ export interface EarningFilter {
     timeframe: TimeFrame;
     agentWise: string;
 }
+export interface agentCommission{
+    agentId : string;
+    agentCommission : number;
+    approved : "accepted" | "denied";
+}
+export interface superAgentCommission{
+    superAgentId : string;
+    agentCommission : number;
+    approved : "accepted" | "denied";
+}
 export interface AdminFilter {
     searchName: string;
     status: "all" | "recent" | "requested" | "denied";
@@ -249,6 +259,32 @@ export class adminController{
             res.status(500).json({ message: (error as Error).message });
         }
     }
+    
+    static async deleteYatch(req: Request, res: Response): Promise<void> {
+        try {
+            const yatchId = req.params.yatchId;
+            const yatchs = await AdminService.deleteYatch(yatchId);
+            res.status(200).json({ yatchs });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async updatePricing(req: Request, res: Response): Promise<void> {
+        try {
+            const yatchId = req.body.yatchId;
+            const updateDetails : Partial<ApprovedDetails>= {
+                sailingPeakTimePrice :req.body.sailingPeakTimePrice,
+                sailingNonPeakTimePrice :req.body.sailingNonPeakTimePrice,
+                anchoringPeakTimePrice :req.body.anchoringPeakTimePrice,
+                anchoringNonPeakTimePrice :req.body.anchoringNonPeakTimePrice,
+            }
+            const yatchs = await AdminService.updatePricing(yatchId,updateDetails);
+            res.status(200).json({ yatchs });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
 
     static async getAllOwners(req: Request, res: Response): Promise<void> {
         try {
@@ -263,6 +299,16 @@ export class adminController{
         try {
             const agents = await AdminService.getAllAgents();
             res.status(200).json({ agents });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async superAgentDetail(req: Request, res: Response): Promise<void> {
+        try {
+            const superAgentId = req.params.id;
+            const superAgent = await AdminService.superAgentDetail(superAgentId);
+            res.status(200).json({ superAgent });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }
@@ -368,6 +414,60 @@ export class adminController{
             }
             const yatchs = await AdminService.isApprovedYatch(updateDetails,yatchId);
             res.status(200).json({ yatchs });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async isApprovedAgent(req: Request, res: Response): Promise<void> {
+        try {
+            const updateDetails : agentCommission = {
+                agentId : req.body.id,
+                agentCommission : req.body.commision,
+                approved : req.body.approved
+            }
+            const agents = await AdminService.isApprovedAgent(updateDetails);
+            res.status(200).json({ agents });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async isApprovedSuperAgent(req: Request, res: Response): Promise<void> {
+        try {
+            const updateDetails : superAgentCommission = {
+                superAgentId : req.body.id,
+                agentCommission : req.body.commision,
+                approved : req.body.approved
+            }
+            const agents = await AdminService.isApprovedSuperAgent(updateDetails);
+            res.status(200).json({ agents });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async updatesuperAgentComission(req: Request, res: Response): Promise<void> {
+        try {
+            const updateDetails : Partial<superAgentCommission> = {
+                superAgentId : req.body.id,
+                agentCommission : req.body.commision
+            }
+            const agents = await AdminService.updateSuperAgentComission(updateDetails);
+            res.status(200).json({ agents });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async updateAgentComission(req: Request, res: Response): Promise<void> {
+        try {
+            const updateDetails : Partial<agentCommission> = {
+                agentId : req.body.id,
+                agentCommission : req.body.commision
+            }
+            const agents = await AdminService.updateAgentComission(updateDetails);
+            res.status(200).json({ agents });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }

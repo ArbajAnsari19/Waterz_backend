@@ -22,8 +22,8 @@ export interface IOwner extends IUser{
 }
 
 export interface IAgent extends IUser {
+  isVerifiedByAdmin: 'accepted' | 'requested' | 'denied';
   commissionRate?: number;
-  discount?: number;
   superAgent?: IUser | string | null;
 }
 
@@ -94,11 +94,11 @@ const agentSchema = new mongoose.Schema({
     enum: ['customer', 'owner', 'agent', 'super-agent', 'admin'],
     required: true 
   },
-  discount: { type: Number, required: false }, // Discount in percentage
   phone: { type: String, required: true },
   otp: { type: String, required: false },
   otpExpiresAt: { type: Date, required: false },
   isVerified: { type: Boolean, default: false },
+  isVerifiedByAdmin: { type: String, enum: ["accepted", "requested", "denied"], required: true },
   commissionRate: { type: Number, required: false }, 
   superAgent: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   createdAt: { type: Date, default: Date.now },

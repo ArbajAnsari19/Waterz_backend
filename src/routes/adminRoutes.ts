@@ -8,14 +8,20 @@ const router = express.Router();
 router.get("/getAllYatchs", authenticateToken, authenticateAdmin, adminController.getAllYatchs);
 router.post("/filtered-yatchs", authenticateToken, authenticateAdmin, adminController.filterYatchs);
 router.get("requested/yatch/:yatchId",authenticateToken,authenticateAdmin,adminController.yatchRequestDetails)
-router.get("/approve/yatch/:yatchId",authenticateToken,authenticateAdmin,adminController.isApprovedYatch)
+router.post("/isApproved/yatch/:yatchId",authenticateToken,authenticateAdmin,adminController.isApprovedYatch)
+router.post("/updatePricing", authenticateToken, authenticateAdmin, adminController.updatePricing);
 router.post("/filtered-bookings", authenticateToken, authenticateAdmin, adminController.filterBookings);
 router.post("/filtered-customers", authenticateToken, authenticateAdmin, adminController.filterCustomers);
 router.delete("/delete-customer/:customerId", authenticateToken, authenticateAdmin, adminController.deleteCustomer);
+router.delete("/delete-yatch/:yatchId", authenticateToken, authenticateAdmin, adminController.deleteYatch);
 router.post("/filtered-agent", authenticateToken, authenticateAdmin, adminController.filterAgents);
 router.post("/getFilteredSuperAgents", authenticateToken, authenticateAdmin, adminController.filterSuperAgents);
 router.post("/filtered-Earning", authenticateToken, authenticateAdmin, adminController.filterEarnings);
-router.get("/analytics", adminController.adminNavbar);
+router.post("/isApproved/agent",authenticateToken,authenticateAdmin,adminController.isApprovedAgent)
+router.post("/update-Agent-comission",authenticateToken,authenticateAdmin,adminController.updateAgentComission)
+router.post("/isApproved/superAgent",authenticateToken,authenticateAdmin,adminController.isApprovedSuperAgent)
+router.post("/update-superAgent-comission",authenticateToken,authenticateAdmin,adminController.updatesuperAgentComission)
+router.get("/analytics",authenticateToken,authenticateAdmin, adminController.adminNavbar);
 router.post("/getAdminDashboard", authenticateToken, authenticateAdmin, adminController.getAdminDashboard);
 router.get("/getAllOwners", authenticateToken, authenticateAdmin, adminController.getAllOwners);
 router.post("/getAllCustomers", authenticateToken, authenticateAdmin, adminController.getAllCustomers);
@@ -29,5 +35,6 @@ router.post("/getAllAgents", authenticateToken, authenticateAdmin, adminControll
 router.post("/getAllPayments", authenticateToken, authenticateAdmin, adminController.getAllPayments);
 router.get("/yatchOwner", authenticateToken, authenticateAdmin, adminController.getYatchOwner);
 router.get("/owners-Booking", authenticateToken, authenticateAdmin, adminController.getAllBookingByOwner);
+router.get("/superAgent-detail/:id", authenticateToken, authenticateAdmin,adminController.superAgentDetail);
 
 export default router;

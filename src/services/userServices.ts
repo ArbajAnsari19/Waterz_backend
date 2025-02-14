@@ -7,7 +7,7 @@ import {findRoleById} from "../utils/role";
 import Yacht, { IYacht } from "../models/Yacht";
 import Booking, {IBooking} from "../models/Booking"; 
 import { EarningFilter } from "../controllers/userController";
-import {AdminFilter,ApprovedDetails,AdminFilterBooking,AdminCustomerFilter,AdminSuperAgentFilter,AdminEarningFilter,AdminDashboardFilter} from "../controllers/userController";
+import {AdminFilter,ApprovedDetails,agentCommission,superAgentCommission,AdminFilterBooking,AdminCustomerFilter,AdminSuperAgentFilter,AdminEarningFilter,AdminDashboardFilter} from "../controllers/userController";
 
 dotenv.config();
 const OTP_JWT_SECRET = process.env.OTP_JWT_SECRET as string;
@@ -810,6 +810,70 @@ class AdminService {
     }
   }
 
+  static async isApprovedAgent(updateDetails : agentCommission): Promise<IAgent | null> {
+    try {
+      if(updateDetails.agentId === undefined || updateDetails.agentCommission === undefined){
+        throw new Error("Agent ID and Commission rate is required");
+      }
+      const agent = await Agent.findByIdAndUpdate(updateDetails.agentId, {
+        commissionRate: updateDetails.agentCommission,
+        isVerifiedByAdmin:updateDetails.approved
+       }, { new: true });
+      return agent;
+    } catch (error) {
+      throw new Error("Error updating agent: " + (error as Error).message);
+    }
+  }
+
+  static async deleteYatch(yatchId: string): Promise<IYacht | null> {
+    try {
+      return await Yacht.findByIdAndDelete(yatchId);
+    } catch (error) {
+      throw new Error("Error deleting yatch: " + (error as Error).message);
+    }
+  }
+
+  static async updateAgentComission(updateDetails:Partial<agentCommission>): Promise<IAgent | null> {
+    try {
+      return await Agent.findByIdAndUpdate(updateDetails.agentId, { commissionRate : updateDetails.agentCommission }, { new: true });
+    }
+    catch (error) {
+      throw new Error("Error updating agent: " + (error as Error).message);
+    }
+  }
+
+  static async updateSuperAgentComission(updateDetails:Partial<superAgentCommission>): Promise<ISuperAgent | null> {
+    try {
+      return await SuperAgent.findByIdAndUpdate(updateDetails.superAgentId, { commissionRate : updateDetails.agentCommission }, { new: true });
+    }
+    catch (error) {
+      throw new Error("Error updating agent: " + (error as Error).message);
+    }
+  }
+
+  static async superAgentDetail(superAgentId: string): Promise<ISuperAgent | null> {
+    try {
+      return await SuperAgent.findById(superAgentId);
+    } catch (error) {
+      throw new Error("Error getting super agent: " + (error as Error).message);
+    }
+  }
+
+  static async isApprovedSuperAgent(updateDetails : superAgentCommission): Promise<ISuperAgent | null> {
+    try {
+      if(updateDetails.superAgentId === undefined || updateDetails.agentCommission === undefined){
+        throw new Error("Agent ID and Commission rate is required");
+      }
+      const agent = await SuperAgent.findByIdAndUpdate(updateDetails.superAgentId, {
+        commissionRate: updateDetails.agentCommission,
+        isVerifiedByAdmin:updateDetails.approved
+       }, { new: true });
+      return agent;
+    } catch (error) {
+      throw new Error("Error updating agent: " + (error as Error).message);
+    } 
+  }
+
    static async getAllOwners(): Promise<IOwner[]> {
     try {
       return await Owner.find();
@@ -871,6 +935,27 @@ class AdminService {
       return await Admin.find();
     } catch (error) {
       throw new Error("Error listing admins: " + (error as Error).message);
+    }
+  }
+
+  static async updatePricing(yachtId: string, updateDetails: Partial<ApprovedDetails>): Promise<IYacht | null> {
+    try {
+      const updateQuery = {
+        $set: {
+          'price.sailing.peakTime': updateDetails.sailingPeakTimePrice,
+          'price.sailing.nonPeakTime': updateDetails.sailingNonPeakTimePrice,
+          'price.anchoring.peakTime': updateDetails.anchoringPeakTimePrice,
+          'price.anchoring.nonPeakTime': updateDetails.anchoringNonPeakTimePrice
+        }
+      };
+  
+      return await Yacht.findByIdAndUpdate(
+        yachtId,
+        updateQuery,
+        { new: true }
+      );
+    } catch (error) {
+      throw new Error("Error updating pricing: " + (error as Error).message);
     }
   }
 

@@ -299,7 +299,7 @@ class BookingService {
 
     // Apply agent discount
     const agent = await Agent.findById(user);
-    const agentDiscount = agent?.discount ?? 0;
+    const agentDiscount = agent?.commissionRate ?? 0;
     const discountedAmount = totalAmount - (totalAmount * agentDiscount / 100);
 
 
@@ -427,7 +427,7 @@ class BookingService {
     // Apply agent discount
     const agent = await Agent.findById(user);
     if (!agent) throw new Error("Agent not found");
-    const agentDiscount = agent.discount ?? 0;
+    const agentDiscount = agent.commissionRate ?? 0;
     const discountedAmount = totalAmount - (totalAmount * agentDiscount / 100);
 
       // In BookingService.createBooking
