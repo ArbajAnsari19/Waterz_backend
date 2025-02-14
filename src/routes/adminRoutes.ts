@@ -17,7 +17,6 @@ router.post("/getFilteredSuperAgents", authenticateToken, authenticateAdmin, adm
 router.post("/filtered-Earning", authenticateToken, authenticateAdmin, adminController.filterEarnings);
 router.get("/analytics", adminController.adminNavbar);
 router.post("/getAdminDashboard", authenticateToken, authenticateAdmin, adminController.getAdminDashboard);
-
 router.get("/getAllOwners", authenticateToken, authenticateAdmin, adminController.getAllOwners);
 router.post("/getAllCustomers", authenticateToken, authenticateAdmin, adminController.getAllCustomers);
 router.post("/getAllBookings", authenticateToken, authenticateAdmin, adminController.getAllBookings);
