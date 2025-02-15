@@ -18,7 +18,7 @@ router.post("/filtered-agent", authenticateToken, authenticateAdmin, adminContro
 router.post("/getFilteredSuperAgents", authenticateToken, authenticateAdmin, adminController.filterSuperAgents);
 router.post("/filtered-Earning", authenticateToken, authenticateAdmin, adminController.filterEarnings);
 router.post("/isApproved/agent",authenticateToken,authenticateAdmin,adminController.isApprovedAgent)
-router.post("/update-Agent-comission",authenticateToken,authenticateAdmin,adminController.updateAgentComission)
+router.post("/update-agent-comission",authenticateToken,authenticateAdmin,adminController.updateAgentComission)
 router.post("/isApproved/superAgent",authenticateToken,authenticateAdmin,adminController.isApprovedSuperAgent)
 router.post("/update-superAgent-comission",authenticateToken,authenticateAdmin,adminController.updatesuperAgentComission)
 router.get("/analytics",authenticateToken,authenticateAdmin, adminController.adminNavbar);

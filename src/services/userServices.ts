@@ -731,7 +731,7 @@ class UserService {
       const user = await (Role as typeof User ||  Role as typeof Owner || Role as typeof Agent ).findById(userId);
       console.log("User is here : ", user);
       if (user && user.otp === otp && user.otpExpiresAt && user.otpExpiresAt > new Date()) {
-        await (Role as typeof User ||  Role as typeof Owner || Role as typeof Agent ).findByIdAndUpdate(userId, { isVerified: true, otp: null, otpExpiresAt: null });
+        await (Role as typeof User ||  Role as typeof Owner || Role as typeof Agent || Role as typeof SuperAgent ).findByIdAndUpdate(userId, { isVerified: true, otp: null, otpExpiresAt: null });
         return { message: 'OTP verified successfully' };
       }
       throw new Error('Invalid or expired OTP');
