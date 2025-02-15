@@ -170,6 +170,17 @@ export class userController {
         }
     }
 
+    static async updateAgentProfile(req: Request, res: Response): Promise<void> {
+        try {
+            const userId = req.currentUser.id;
+            const updateDetails = req.body;
+            const user = await UserprofileService.updateAgentProfile(userId, updateDetails);
+            res.status(200).json({ message: 'Profile Updated' });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }   
+
     // superAgent
     static async meSuperAgent(req: Request, res: Response): Promise<void> {
         try {
@@ -187,7 +198,18 @@ export class userController {
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }
-    }   
+    }  
+    
+    static async updateSuperAgentProfile(req: Request, res: Response): Promise<void> {
+        try {
+            const userId = req.currentUser.id;
+            const updateDetails = req.body;
+            const user = await UserprofileService.updateSuperAgentProfile(userId, updateDetails);
+            res.status(200).json({ message: 'Profile Updated' });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
 
     static async listAllAgent(req: Request, res: Response): Promise<void> {
         try {

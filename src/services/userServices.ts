@@ -205,6 +205,24 @@ class UserprofileService{
     }
 
   }
+  
+  static async updateAgentProfile(userId: string, userData: Partial<IAgent>): Promise<IUser | null> {
+    try {
+      const { age,experience,address,accountHolderName,accountNumber,bankName,ifscCode,imgUrl } = userData;
+      return await Agent.findByIdAndUpdate(userId, {
+        age,
+        experience,
+        address,
+        accountHolderName,
+        accountNumber,
+        bankName,
+        ifscCode,
+        imgUrl
+      }, { new: true });
+    } catch (error) {
+      throw new Error("Error updating user: " + (error as Error).message);
+    }
+  }
 
   static async agentCurrentRides(userId: string): Promise<IBooking[] | null> {
     try {
@@ -284,11 +302,30 @@ class UserprofileService{
       throw new Error("Error getting user: " + (error as Error).message);
     }
   }
+  
   static async paymentDetail(userId: string): Promise<IUser | null> {
     try {
       return await User.findById(userId);
     } catch (error) {
       throw new Error("Error getting user: " + (error as Error).message);
+    }
+  }
+
+  static async updateSuperAgentProfile(userId: string, userData: Partial<ISuperAgent>): Promise<IUser | null> {
+    try {
+      const { age,experience,address,accountHolderName,accountNumber,bankName,ifscCode,imgUrl } = userData;
+      return await SuperAgent.findByIdAndUpdate(userId, {
+        age,
+        experience,
+        address,
+        accountHolderName,
+        accountNumber,
+        bankName,
+        ifscCode,
+        imgUrl
+      }, { new: true });
+    } catch (error) {
+      throw new Error("Error updating user: " + (error as Error).message);
     }
   }
 
@@ -536,9 +573,10 @@ class UserService {
       otpExpiresAt,
       isVerified: false,
       commissionRate: 0,
+      isVerifiedByAdmin: "requested",
       ...(superAgentId && { superAgent: superAgentId })
     });
-          // Save agent
+    // Save agent
     console.log("Agent is here : ", agent);
     const savedAgent = await agent.save();
 
@@ -728,7 +766,7 @@ class UserService {
     try {
       const Role = findRoleById(role);
       console.log("role is here : ", Role);
-      const user = await (Role as typeof User ||  Role as typeof Owner || Role as typeof Agent ).findById(userId);
+      const user = await (Role as typeof User ||  Role as typeof Owner || Role as typeof Agent ||Role as typeof SuperAgent).findById(userId);
       console.log("User is here : ", user);
       if (user && user.otp === otp && user.otpExpiresAt && user.otpExpiresAt > new Date()) {
         await (Role as typeof User ||  Role as typeof Owner || Role as typeof Agent || Role as typeof SuperAgent ).findByIdAndUpdate(userId, { isVerified: true, otp: null, otpExpiresAt: null });
@@ -864,11 +902,12 @@ class AdminService {
       if(updateDetails.superAgentId === undefined || updateDetails.agentCommission === undefined){
         throw new Error("Agent ID and Commission rate is required");
       }
-      const agent = await SuperAgent.findByIdAndUpdate(updateDetails.superAgentId, {
+      const superAgent = await SuperAgent.findByIdAndUpdate(updateDetails.superAgentId, {
         commissionRate: updateDetails.agentCommission,
         isVerifiedByAdmin:updateDetails.approved
        }, { new: true });
-      return agent;
+       console.log("superAgent after update is here :", superAgent);
+      return superAgent;
     } catch (error) {
       throw new Error("Error updating agent: " + (error as Error).message);
     } 

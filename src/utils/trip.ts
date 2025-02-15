@@ -14,12 +14,14 @@ export enum PackageType {
 }
 
 export enum AddonService {
-  CATERING = "catering",
-  VINE_BAR = "vine_bar",
-  DRONE = "drone",
-  DECORATION = "decoration",
-  WATER_SPORTS = "water_sports"
+  Photographer = "Photographer",
+  Photographer_with_Drone = "Photographer + Drone shot",
+  DRONE = "⁠Birthday Cake",
+  Anniversary_Cake = "Anniversary Cake",
+  Dancers = "Dancers",
+  Decoration = "Decoration",
 }
+
 
 export enum LocationType {
   DUBAI_MARINA = "Dubai Marina",

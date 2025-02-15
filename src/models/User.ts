@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { IYacht } from './Yacht';
 import { IBooking } from './Booking';
+import { profile } from 'console';
 
 
 export interface IUser {
@@ -22,6 +23,15 @@ export interface IOwner extends IUser{
 }
 
 export interface IAgent extends IUser {
+  imgUrl?: string[];
+  age?: number;
+  DateOfBirth?: Date;
+  experience?: number;
+  address?: string;
+  accountHolderName?: string;
+  accountNumber?: string;
+  bankName?: string;
+  ifscCode?: string;
   isVerifiedByAdmin: 'accepted' | 'requested' | 'denied';
   commissionRate?: number;
   superAgent?: IUser | string | null;
@@ -30,6 +40,7 @@ export interface IAgent extends IUser {
 export interface ISuperAgent extends IAgent {
   agents: mongoose.Types.ObjectId[] | IAgent[];
   referralCode: string;
+  isVerifiedByAdmin: 'accepted' | 'requested' | 'denied';
 }
 
 export interface IAdmin {
@@ -85,7 +96,6 @@ const ownerSchema = new mongoose.Schema({
 
 
 const agentSchema = new mongoose.Schema({
-  // Existing fields
   name: { type: String, required: true },
   email: { type: String, unique: true, required: true },
   password: { type: String, required: true },
@@ -103,8 +113,6 @@ const agentSchema = new mongoose.Schema({
   superAgent: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   createdAt: { type: Date, default: Date.now },
   bookings: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Booking' }],
-  // New fields from IAgent interface
-  username: { type: String, unique: true, required: false },
   age: { type: Number, required: false },
   experience: { type: Number, required: false },
   address: { type: String, required: false },
@@ -127,11 +135,21 @@ const superAgentSchema = new mongoose.Schema({
   phone: { type: String, required: true },
   otp: { type: String, required: false },
   otpExpiresAt: { type: Date, required: false },
+  age: { type: Number, required: false },
+  experience: { type: Number, required: false },
+  address: { type: String, required: false },
+  accountHolderName: { type: String, required: false },
+  accountNumber: { type: String, required: false },
+  bankName: { type: String, required: false },
+  ifscCode: { type: String, required: false },
+  imgUrl: { type: String, required: false },
+  isVerifiedByAdmin: { type: String, enum: ["accepted", "requested", "denied"], default:"requested", required: true },
   isVerified: { type: Boolean, default: false },
   referralCode : { type: String, required: true },
-  commissionRate: { type: Number, required: false }, // Commission in percentage
+  commissionRate: { type: Number,default:0, required: false}, // Commission in percentage
   agents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false }], // Managed Agents
   createdAt: { type: Date, default: Date.now },
+
 });
 
 const adminSchema = new mongoose.Schema({

@@ -1,6 +1,6 @@
 import mongoose, { ObjectId } from "mongoose";
 import { AddonService,LocationType } from "../utils/trip";
-
+import { PackageType } from "../utils/trip";
 
 interface AddonServiceDetail {
   service: AddonService;
@@ -28,9 +28,10 @@ export interface IYacht {
   availability: boolean;
   amenities: string[];
   capacity: number;
+  packageTypes: PackageType[];  
   mnfyear?: number;
   dimension?: string;
-  crews?: Array<{ name: string; role: string }>[];
+  crews?:number;
   images: string[];
   createdAt?: Date;
   YachtType: string;
@@ -78,8 +79,13 @@ export const yachtSchema = new mongoose.Schema<IYacht>({
   amenities: { type: [String], required: true }, // e.g., "AC", "WiFi"
   capacity: { type: Number, required: true },
   mnfyear: { type: Number },
+  packageTypes: {
+    type: [String],
+    enum: Object.values(PackageType),
+    required: true
+  },
   dimension: { type: String },
-  crews: [{ name: { type: String }, role: { type: String } }], // Array of crew objects
+  crews:  { type: Number, required: true }, // Array of crew objects
   images: { type: [String], required: true }, // Array of image URLs
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

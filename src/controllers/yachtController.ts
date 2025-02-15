@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import YatchService from '../services/yatchServices';
 import UserService from '../services/userServices';
-import {LocationType,AddonService} from '../utils/trip';
+import {LocationType,AddonService,PackageType} from '../utils/trip';
 
 
 export class YatchController {
@@ -62,6 +62,7 @@ export class YatchController {
             amenities,
             availability,
             price,
+            packageTypes,
             addonServices
           } = req.body;
 
@@ -83,14 +84,28 @@ export class YatchController {
           }
 
           // Validate addon services
-          if (addonServices) {
+        if (addonServices) {
             addonServices.forEach((addon: { service: string; pricePerHour: number }) => {
-              if (!addon.service || !addon.pricePerHour || 
-                !Object.values(AddonService).includes(addon.service as AddonService)) {
-              throw new Error('Invalid addon service structure');
-              }
+                if (!addon.service || typeof addon.pricePerHour !== 'number') {
+                    throw new Error('Invalid addon service structure: missing service or price');
+                }
+                
+                const validService = Object.values(AddonService).includes(addon.service as AddonService);
+                if (!validService) {
+                    throw new Error(`Invalid addon service: ${addon.service}. Must be one of: ${Object.values(AddonService).join(', ')}`);
+                }
             });
+        }
+          
+        // Validate packageTypes array
+        if (packageTypes && Array.isArray(packageTypes)) {
+          const invalidPackage = packageTypes.some(
+              pkg => !Object.values(PackageType).includes(pkg)
+          );
+          if (invalidPackage) {
+              throw new Error('Invalid package type in list');
           }
+      }
           const owner = req.currentUser.id;
           const yachtDetails = {
             owner,
@@ -108,6 +123,7 @@ export class YatchController {
             availability,
             price,
             addonServices: addonServices || [],
+            packageTypes,
             isVerifiedByAdmin: 'requested',
           };
       
