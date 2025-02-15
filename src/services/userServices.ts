@@ -897,6 +897,14 @@ class AdminService {
     }
   }
 
+  static async deactivatePromoCode(promoId: string): Promise<IPromo | null> {
+    try {
+      return await Promo.findByIdAndUpdate(promoId, { isActive: false }, { new: true });
+    } catch (error) {
+      throw new Error("Error deactivating promo code: " + (error as Error).message);
+    }
+  }
+
   static async updateSuperAgentProfile(userId: string, userData: Partial<ISuperAgent>): Promise<ISuperAgent | null> {
     try {
       const { age,experience,address,accountHolderName,accountNumber,bankName,ifscCode,imgUrl,commissionRate } = userData;

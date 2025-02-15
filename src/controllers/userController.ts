@@ -368,6 +368,16 @@ export class adminController{
     //     }
     // }
 
+    static async deactivatePromoCode(req: Request, res: Response): Promise<void> {
+        try {
+            const promoId = req.params.id;
+            const promoCode = await AdminService.deactivatePromoCode(promoId);
+            res.status(200).json({ message: 'Promo code deactivated', promoCode });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
     static async getAllYatchs(req: Request, res: Response): Promise<void> {
         try {
             const yatchs = await AdminService.getAllYatchs();
