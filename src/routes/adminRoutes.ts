@@ -26,7 +26,7 @@ router.post("/update-superAgent-comission",authenticateToken,authenticateAdmin,a
 router.get("/analytics",authenticateToken,authenticateAdmin, adminController.adminNavbar);
 router.post("/getAdminDashboard", authenticateToken, authenticateAdmin, adminController.getAdminDashboard);
 router.get("/getAllOwners", authenticateToken, authenticateAdmin, adminController.getAllOwners);
-router.post("/getAllCustomers", authenticateToken, authenticateAdmin, adminController.getAllCustomers);
+router.get("/getAllCustomers", authenticateToken, authenticateAdmin, adminController.getAllCustomers);
 router.post("/getAllBookings", authenticateToken, authenticateAdmin, adminController.getAllBookings);
 router.get("/getAllQueries", authenticateToken, authenticateAdmin, adminController.getAllQueries);
 router.post("/queryResponse/:id", authenticateToken, authenticateAdmin, adminController.queryResponse);
