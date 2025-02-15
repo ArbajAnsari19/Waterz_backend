@@ -29,6 +29,7 @@ router.get("/getAllOwners", authenticateToken, authenticateAdmin, adminControlle
 router.post("/getAllCustomers", authenticateToken, authenticateAdmin, adminController.getAllCustomers);
 router.post("/getAllBookings", authenticateToken, authenticateAdmin, adminController.getAllBookings);
 router.get("/getAllQueries", authenticateToken, authenticateAdmin, adminController.getAllQueries);
+router.post("/queryResponse", authenticateToken, authenticateAdmin, adminController.queryResponse);
 router.get("/getAllPayments", authenticateToken, authenticateAdmin, adminController.getAllPayments);
 router.get("/getAllAgents", authenticateToken, authenticateAdmin, adminController.getAllAgents);
 router.get("/getAllPayments", authenticateToken, authenticateAdmin, adminController.getAllPayments);

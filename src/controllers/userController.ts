@@ -428,6 +428,30 @@ export class adminController{
             res.status(500).json({ message: (error as Error).message });
         }
     }
+    static async queryResponse(req: Request, res: Response): Promise<Response> {
+        // Extract id from query parameters (or use req.params if preferred)
+        const { id } = req.query;
+        // Destructure body fields
+        const { email, name, query, queryAnswer } = req.body;
+      
+        if (!id) {
+          return res.status(400).json({ message: "Query ID is required." });
+        }
+      
+        try {
+          // Pass the id along with the other parameters
+          await AdminService.sendQueryResponseEmail(
+            id as string,
+            email,
+            name,
+            query,
+            queryAnswer
+          );
+          return res.status(200).json({ message: "Query response sent and updated successfully." });
+        } catch (error) {
+          return res.status(500).json({ message: "Error sending query response: " + (error as Error).message });
+        }
+      }
 
     static async getYatchOwner(req: Request, res: Response): Promise<void> {
         try {

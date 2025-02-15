@@ -9,9 +9,12 @@ import Booking, {IBooking} from "../models/Booking";
 import { EarningFilter } from "../controllers/userController";
 import {AdminFilter,ApprovedDetails,agentCommission,superAgentCommission,AdminFilterBooking,AdminCustomerFilter,AdminSuperAgentFilter,AdminEarningFilter,AdminDashboardFilter} from "../controllers/userController";
 import {Promo,IPromo} from "../models/Promo";
+import Query from "../models/Query";
+import sgMail from '@sendgrid/mail';
 
 dotenv.config();
 const OTP_JWT_SECRET = process.env.OTP_JWT_SECRET as string;
+sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
 
 export interface IUserAuthInfo {
   user: IUser | IAdmin;
@@ -1020,9 +1023,105 @@ class AdminService {
 
   static async getAllQueries(): Promise<IUser[]> {
     try {
-      return await User.find();
+      return await Query.find();
     } catch (error) {
       throw new Error("Error listing queries: " + (error as Error).message);
+    }
+  }
+
+  static async sendQueryResponseEmail(
+    id: string,
+    email: string,
+    name: string,
+    query: string,
+    queryAnswer: string
+  ): Promise<void> {
+    try {
+      const senderEmail = process.env.SENDER_EMAIL;
+      
+      // Build the email content (HTML version)
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f4;
+                margin: 0;
+                padding: 0;
+              }
+              .container {
+                background-color: #ffffff;
+                padding: 20px;
+                margin: 20px auto;
+                max-width: 600px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+              }
+              .header {
+                text-align: center;
+                background-color: #007bff;
+                color: #ffffff;
+                padding: 10px;
+                border-radius: 5px 5px 0 0;
+              }
+              .content {
+                padding: 20px;
+              }
+              .footer {
+                text-align: center;
+                font-size: 12px;
+                color: #777;
+                margin-top: 20px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h2>Your Company Name</h2>
+              </div>
+              <div class="content">
+                <p>Dear ${name},</p>
+                <p>Thank you for reaching out with your query:</p>
+                <blockquote style="border-left: 4px solid #007bff; padding-left: 10px;">${query}</blockquote>
+                <p>Here is our response:</p>
+                <blockquote style="border-left: 4px solid #28a745; padding-left: 10px;">${queryAnswer}</blockquote>
+                <p>We hope this answers your question. If you have any further questions, please feel free to reply to this email.</p>
+                <p>Best regards,<br/>Your Company Name</p>
+              </div>
+              <div class="footer">
+                <p>&copy; ${new Date().getFullYear()} Your Company Name. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+      
+      // Construct the message object similar to your payment service
+      const msg = {
+        to: email,
+        from: {
+          email: senderEmail,
+          name: 'Your Company Name',
+        },
+        subject: 'Response to Your Query',
+        text: `Dear ${name},\n\nThank you for your query:\n\n${query}\n\nResponse:\n\n${queryAnswer}\n\nBest regards,\nYour Company Name`,
+        html: htmlContent,
+      };
+
+      // Send the email
+      // @ts-ignore
+      await sgMail.send(msg);
+      console.log('Query response email sent successfully to:', email);
+      
+      // Update the Query document with the response
+      await Query.findByIdAndUpdate(id, { messageResponse: queryAnswer });
+      console.log('Query document updated with the response.');
+    } catch (error) {
+      console.error('Error in sendQueryResponseEmail:', (error as Error).message);
+      throw new Error("Error sending query response email: " + (error as Error).message);
     }
   }
 
