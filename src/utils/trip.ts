@@ -24,10 +24,9 @@ export enum AddonService {
 
 
 export enum LocationType {
-  DUBAI_MARINA = "Dubai Marina",
-  PALM_JUMEIRAH = "Palm Jumeirah",
-  DUBAI_HARBOUR = "Dubai Harbour",
-  PORT_RASHID = "Port Rashid"
+  Old_Goa = "Old Goa",
+  Panjim = "Panjim",
+  Britona = "Britona",
 }
 
 export enum TimeFrame {
