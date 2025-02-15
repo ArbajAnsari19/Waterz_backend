@@ -1080,19 +1080,19 @@ class AdminService {
           <body>
             <div class="container">
               <div class="header">
-                <h2>Your Company Name</h2>
+                <h2>Waterz Goa</h2>
               </div>
               <div class="content">
                 <p>Dear ${name},</p>
                 <p>Thank you for reaching out with your query:</p>
                 <blockquote style="border-left: 4px solid #007bff; padding-left: 10px;">${query}</blockquote>
-                <p>Here is our response:</p>
+                <p>Response:</p>
                 <blockquote style="border-left: 4px solid #28a745; padding-left: 10px;">${queryAnswer}</blockquote>
                 <p>We hope this answers your question. If you have any further questions, please feel free to reply to this email.</p>
-                <p>Best regards,<br/>Your Company Name</p>
+                <p>Best regards,<br/>Waterz Goa</p>
               </div>
               <div class="footer">
-                <p>&copy; ${new Date().getFullYear()} Your Company Name. All rights reserved.</p>
+                <p>&copy; ${new Date().getFullYear()} Waterz Goa. All rights reserved.</p>
               </div>
             </div>
           </body>
@@ -1104,7 +1104,7 @@ class AdminService {
         to: email,
         from: {
           email: senderEmail,
-          name: 'Your Company Name',
+          name: 'Waterz Yacht',
         },
         subject: 'Response to Your Query',
         text: `Dear ${name},\n\nThank you for your query:\n\n${query}\n\nResponse:\n\n${queryAnswer}\n\nBest regards,\nYour Company Name`,
