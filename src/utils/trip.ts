@@ -16,7 +16,7 @@ export enum PackageType {
 export enum AddonService {
   Photographer = "Photographer",
   Photographer_with_Drone = "Photographer + Drone shot",
-  DRONE = "⁠Birthday Cake",
+  Birthday_Cake = "Birthday Cake",
   Anniversary_Cake = "Anniversary Cake",
   Dancers = "Dancers",
   Decoration = "Decoration",

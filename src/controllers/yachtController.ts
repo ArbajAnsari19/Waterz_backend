@@ -160,7 +160,7 @@ export class YatchController {
     try {
       const owner = req.currentUser.id;
       const yachts = await YatchService.findYachtsByOwner(owner);
-      res.status(200).json(yachts);
+      res.status(200).json({"yachts" : yachts});
     } catch (error) {
       res.status(500).json({ message: (error as Error).message });
     }

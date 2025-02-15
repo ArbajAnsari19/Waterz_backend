@@ -205,7 +205,7 @@ export class userController {
             const userId = req.currentUser.id;
             const updateDetails = req.body;
             const user = await UserprofileService.updateSuperAgentProfile(userId, updateDetails);
-            res.status(200).json({ message: 'Profile Updated' });
+            res.status(200).json({ message: 'Profile Updated', user });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }
@@ -277,6 +277,28 @@ export class adminController{
         try {
             const yatchs = await AdminService.getAllYatchs();
             res.status(200).json({ yatchs });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async updateAgentProfile(req: Request, res: Response): Promise<void> {
+        try {
+            const userId = req.params.id;
+            const updateDetails = req.body;
+            const user = await AdminService.updateAgentProfile(userId, updateDetails);
+            res.status(200).json({ message: 'Profile Updated', user });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async updateSuperAgentProfile(req: Request, res: Response): Promise<void> {
+        try {
+            const userId = req.params.id;
+            const updateDetails = req.body;
+            const user = await AdminService.updateSuperAgentProfile(userId, updateDetails);
+            res.status(200).json({ message: 'Profile Updated', user });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }
