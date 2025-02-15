@@ -116,11 +116,13 @@ class YatchService {
       try {
         const yatch = new Yacht({
             ...yatchDtails,
+            isVerifiedByAdmin: "requested",
             createdAt: new Date(),
             updatedAt: new Date(),
           });
         const newYatch = await yatch.save();
         const yachtId = newYatch._id.toString();
+        console.log(yachtId);
         return {yachtId};
       } catch (error) {
         throw new Error((error as Error).message);

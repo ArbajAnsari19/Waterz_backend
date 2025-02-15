@@ -840,6 +840,47 @@ class UserService {
 
 class AdminService {
 
+  static async updateAgentProfile(userId: string, userData: Partial<IAgent>): Promise<IAgent | null> {
+    try{
+      const { age,experience,address,accountHolderName,accountNumber,bankName,ifscCode,imgUrl,commissionRate } = userData;
+      return await Agent.findByIdAndUpdate(userId, {
+        age,
+        experience,
+        address,
+        accountHolderName,
+        accountNumber,
+        bankName,
+        ifscCode,
+        imgUrl,
+        commissionRate,
+        isVerifiedByAdmin: "accepted"
+      }, { new: true });
+    }
+    catch (error) {
+      throw new Error("Error updating user: " + (error as Error).message);
+    }
+  }
+
+  static async updateSuperAgentProfile(userId: string, userData: Partial<ISuperAgent>): Promise<ISuperAgent | null> {
+    try {
+      const { age,experience,address,accountHolderName,accountNumber,bankName,ifscCode,imgUrl,commissionRate } = userData;
+      return await SuperAgent.findByIdAndUpdate(userId, {
+        age,
+        experience,
+        address,
+        accountHolderName,
+        accountNumber,
+        bankName,
+        ifscCode,
+        commissionRate,
+        isVerifiedByAdmin: "accepted",
+        imgUrl
+      }, { new: true });
+    } catch (error) {
+      throw new Error("Error updating user: " + (error as Error).message);
+    }
+  }
+
   static async getAllYatchs(): Promise<IUser[]> {
     try {
       return await Yacht.find();
