@@ -137,7 +137,8 @@ export class AuthController {
         const authToken = UserService.generateToken(decoded.id, user!.email, user!.role);
         res.status(200).json({ 
           message: 'OTP verified successfully',
-          token: authToken 
+          token: authToken ,
+          id: decoded.id
         });
       } else {
         res.status(400).json({ message: 'Invalid or expired OTP' });

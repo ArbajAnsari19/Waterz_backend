@@ -15,8 +15,8 @@ router.post("/filtered-customers", authenticateToken, authenticateAdmin, adminCo
 router.delete("/delete-customer/:customerId", authenticateToken, authenticateAdmin, adminController.deleteCustomer);
 router.delete("/delete-yatch/:yatchId", authenticateToken, authenticateAdmin, adminController.deleteYatch);
 router.post("/filtered-agent", authenticateToken, authenticateAdmin, adminController.filterAgents);
-router.post("/updateAgentProfile", authenticateToken, authenticateAdmin, adminController.updateAgentProfile);
-router.post("/updateSuperAgentProfile", authenticateToken, authenticateAdmin, adminController.updateSuperAgentProfile);
+router.post("/updateAgentProfile/:id", authenticateToken, authenticateAdmin, adminController.updateAgentProfile);
+router.post("/updateSuperAgentProfile/:id", authenticateToken, authenticateAdmin, adminController.updateSuperAgentProfile);
 router.post("/getFilteredSuperAgents", authenticateToken, authenticateAdmin, adminController.filterSuperAgents);
 router.post("/filtered-Earning", authenticateToken, authenticateAdmin, adminController.filterEarnings);
 router.post("/isApproved/agent",authenticateToken,authenticateAdmin,adminController.isApprovedAgent)

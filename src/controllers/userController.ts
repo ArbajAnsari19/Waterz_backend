@@ -283,9 +283,11 @@ export class adminController{
     }
 
     static async updateAgentProfile(req: Request, res: Response): Promise<void> {
+        console.log("bodyy", req.body)
         try {
             const userId = req.params.id;
             const updateDetails = req.body;
+            console.log("updateDetails",updateDetails);
             const user = await AdminService.updateAgentProfile(userId, updateDetails);
             res.status(200).json({ message: 'Profile Updated', user });
         } catch (error) {
