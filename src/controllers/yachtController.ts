@@ -10,7 +10,7 @@ export class YatchController {
     try {
         const { id } = req.params;
         const yatch = await YatchService.detailsYatch(id);
-        res.status(200).json(yatch);
+        res.status(200).json({"yatch" : yatch});
     } catch (error) {
       res.status(500).json({ message: (error as Error).message });
     }
@@ -47,6 +47,7 @@ export class YatchController {
   }
 
   static async createYatch(req: Request, res: Response): Promise<void> {
+    console.log("body", req.body);
     try {
         const {
             name,
@@ -68,7 +69,7 @@ export class YatchController {
 
 
           // Validate required fields
-          if (!name || !images || !location || !pickupat || !YachtType) {
+          if (!name || !images || !location || !location || !YachtType) {
             throw new Error('Missing required fields');
           }
 
@@ -160,7 +161,7 @@ export class YatchController {
     try {
       const owner = req.currentUser.id;
       const yachts = await YatchService.findYachtsByOwner(owner);
-      res.status(200).json(yachts);
+      res.status(200).json({"yachts" : yachts});
     } catch (error) {
       res.status(500).json({ message: (error as Error).message });
     }
