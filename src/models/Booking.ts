@@ -24,6 +24,7 @@ export interface IBooking extends mongoose.Document {
   images: string[];
   name: string;
   YachtType: string;
+  promoCode?: string;
   capacity: number;
   PeopleNo: number;
   totalAmount: number;

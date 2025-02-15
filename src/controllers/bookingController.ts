@@ -23,9 +23,11 @@ export class BookingController {
                 packages : req.body.packages,
                 addonServices: req.body.addonServices,
                 user: req.currentUser.id,
+                promoCode: req.body.promoCode,
                 yacht: req.params.id
             }
-            const { booking, orderId } = await BookingService.createBooking(BookingDetails);
+            const role = req.currentUser.role;
+            const { booking, orderId } = await BookingService.createBooking(BookingDetails,role);
             res.status(201).json({ message: 'Booking created successfully. Please complete the payment.', booking, orderId });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });

@@ -293,6 +293,30 @@ export class adminController{
         }
     }
 
+    static async getAllPromoCodes(req: Request, res: Response): Promise<void> {
+        try {
+            const promoCodes = await AdminService.getAllPromoCodes();
+            res.status(200).json({ promoCodes });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async createPromoCode(req: Request, res: Response): Promise<void> {
+        try {
+          const promoData = req.body;
+          const promoCode = await AdminService.generatePromoCode(promoData);
+          res.status(201).json({ 
+            message: "Promo code created successfully", 
+            promoCode 
+          });
+        } catch (error) {
+          res.status(400).json({ 
+            message: (error as Error).message 
+          });
+        }
+      }
+
     static async updateSuperAgentProfile(req: Request, res: Response): Promise<void> {
         try {
             const userId = req.params.id;

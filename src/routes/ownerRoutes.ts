@@ -15,6 +15,5 @@ router.get("/prev/ride/:id", authenticateToken,authenticateOwner,userController.
 router.post("/create", authenticateToken,authenticateOwner,YatchController.createYatch);
 router.put("/update/:id",authenticateToken,authenticateOwner, YatchController.updateYatch);
 router.delete("/delete/:id",authenticateToken,authenticateOwner,YatchController.deleteYatch);
-
-// router.get("/me/earnings", authenticateToken,authenticateOwner,YatchController.revenue)
+router.get("/me/earnings", authenticateToken,authenticateOwner,YatchController.revenue)
 export default router;

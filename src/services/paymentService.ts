@@ -4,9 +4,10 @@ import Payment from "../models/Payment";
 import { google } from "googleapis";
 import sgMail from '@sendgrid/mail';
 import dotenv from "dotenv";
-import User from "../models/User";
+import {Promo} from "../models/Promo";
 import Yacht from "../models/Yacht";
 import {Owner} from "../models/User";
+import { Types } from "mongoose";
 
 dotenv.config();
 interface PaymentVerificationDetails {
@@ -424,6 +425,94 @@ class PaymentService {
           throw error;
         }
   }
+
+  static async validateAndApplyPromo(
+    promoCode: string,
+    userId: string,
+    userType: "agent" | "customer",
+    bookingAmount: number
+  ): Promise<{
+    isValid: boolean;
+    discount: number;
+    message: string;
+  }> {
+    try {
+      const promo = await Promo.findOne({ code: promoCode, isActive: true });
+      
+      if (!promo) {
+        return { isValid: false, discount: 0, message: "Invalid promo code" };
+      }
+
+      // Convert userId to ObjectId
+      const userObjectId = new Types.ObjectId(userId);
+  
+      // Check expiry
+      if (new Date() > promo.expiryDate) {
+        return { isValid: false, discount: 0, message: "Promo code expired" };
+      }
+
+      // Check total usage limit
+      if (promo.totalUsageCount >= promo.totalUsageLimit) {
+        return { isValid: false, discount: 0, message: "Promo code usage limit reached" };
+      }
+  
+      // Check user type validity
+      if (promo.validFor !== "all" && promo.validFor !== userType) {
+        return { isValid: false, discount: 0, message: "Promo not valid for this user type" };
+      }
+  
+      // Check targeted users with ObjectId comparison
+      if (promo.targetedUsers?.userIds && promo.targetedUsers.userIds.length > 0) {
+        const isTargetedUser = promo.targetedUsers.userIds.some(id => 
+          id.equals(userObjectId)
+        );
+        if (!isTargetedUser) {
+          return { isValid: false, discount: 0, message: "Promo not valid for this user" };
+        }
+      }
+  
+      // Check user usage limit with ObjectId comparison
+      const userUsage = promo.userUsage.find(u => u.userId.equals(userObjectId));
+      if (userUsage?.usageCount && userUsage?.usageCount >= promo.maxUsagePerUser) {
+        return { isValid: false, discount: 0, message: "Usage limit exceeded for this user" };
+      }
+  
+      // Calculate discount
+      let discount = promo.discountType === "PERCENTAGE" 
+        ? (bookingAmount * promo.discountValue / 100)
+        : promo.discountValue;
+  
+      if (promo.maxDiscountAmount) {
+        discount = Math.min(discount, promo.maxDiscountAmount);
+      }
+  
+      // Update usage with atomic operation
+      await Promo.findByIdAndUpdate(
+        promo._id,
+        {
+          $inc: { totalUsageCount: 1 },
+          $push: {
+            userUsage: {
+              userId: userObjectId,
+              usageCount: 1,
+              usedAt: new Date()
+            }
+          }
+        },
+        { new: true }
+      );
+  
+      return {
+        isValid: true,
+        discount,
+        message: "Promo applied successfully"
+      };
+    } catch (error) {
+      console.error('Promo validation error:', error);
+      throw new Error("Error validating promo: " + (error as Error).message);
+    }
+  }
+
 }
 
 export default PaymentService;
