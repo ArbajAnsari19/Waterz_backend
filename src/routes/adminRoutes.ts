@@ -38,5 +38,7 @@ router.post("/getAllPayments", authenticateToken, authenticateAdmin, adminContro
 router.get("/yatchOwner", authenticateToken, authenticateAdmin, adminController.getYatchOwner);
 router.get("/owners-Booking", authenticateToken, authenticateAdmin, adminController.getAllBookingByOwner);
 router.get("/superAgent-detail/:id", authenticateToken, authenticateAdmin,adminController.superAgentDetail);
+router.post("/generate-promo-code", authenticateToken, authenticateAdmin, adminController.createPromoCode);
+router.get("/getAllPromoCodes", authenticateToken, authenticateAdmin, adminController.getAllPromoCodes);
 
 export default router;

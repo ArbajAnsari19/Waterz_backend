@@ -8,6 +8,7 @@ import Yacht, { IYacht } from "../models/Yacht";
 import Booking, {IBooking} from "../models/Booking"; 
 import { EarningFilter } from "../controllers/userController";
 import {AdminFilter,ApprovedDetails,agentCommission,superAgentCommission,AdminFilterBooking,AdminCustomerFilter,AdminSuperAgentFilter,AdminEarningFilter,AdminDashboardFilter} from "../controllers/userController";
+import {Promo,IPromo} from "../models/Promo";
 
 dotenv.config();
 const OTP_JWT_SECRET = process.env.OTP_JWT_SECRET as string;
@@ -881,11 +882,50 @@ class AdminService {
     }
   }
 
+  static async getAllPromoCodes(): Promise<IPromo[]> {
+    try {
+      return await Promo.find();
+    } catch (error) {
+      throw new Error("Error listing promo codes: " + (error as Error).message);
+    }
+  }
+
   static async getAllYatchs(): Promise<IUser[]> {
     try {
       return await Yacht.find();
     } catch (error) {
       throw new Error("Error listing users: " + (error as Error).message);
+    }
+  }
+  
+  static async generatePromoCode(promoData: IPromo): Promise<IPromo> {
+    try {
+      // Validate promo code format
+      if (!/^[A-Z0-9]{6,12}$/.test(promoData.code)) {
+        throw new Error("Invalid promo code format");
+      }
+  
+      // Validate discount value
+      if (promoData.discountType === "PERCENTAGE" && (promoData.discountValue <= 0 || promoData.discountValue > 100)) {
+        throw new Error("Percentage discount must be between 0 and 100");
+      }
+  
+      // Check if promo code already exists
+      const existingPromo = await Promo.findOne({ code: promoData.code });
+      if (existingPromo) {
+        throw new Error("Promo code already exists");
+      }
+  
+      // Create new promo code
+      const newPromoCode = new Promo({
+        ...promoData,
+        isActive: true,
+        createdAt: new Date()
+      });
+  
+      return await newPromoCode.save();
+    } catch (error) {
+      throw new Error("Error generating promo code: " + (error as Error).message);
     }
   }
 

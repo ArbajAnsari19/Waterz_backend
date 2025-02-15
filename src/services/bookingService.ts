@@ -5,12 +5,16 @@ import Owner from "../models/User";
 import User,{ Agent } from "../models/User";
 import Razorpay from "razorpay";
 import { PackageType } from "../utils/trip";
+import PaymentService from "./paymentService";
 
 interface customerData {
   customerName: string;
   customerPhone: string;
   customerEmail: string;
 }
+interface Role {
+  role: "agent" | "customer";
+} 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || (() => { throw new Error("RAZORPAY_KEY_ID is not defined"); })(),
   key_secret: process.env.RAZORPAY_KEY_SECRET,
@@ -18,7 +22,7 @@ const razorpay = new Razorpay({
 
 class BookingService {
 
-  static async createBooking(BookingDetails: Partial<IBooking>): Promise<{booking: IBooking, orderId: string }> {
+  static async createBooking(BookingDetails: Partial<IBooking>,role : Role): Promise<{booking: IBooking, orderId: string }> {
     try {
       const { 
         startDate, 
@@ -27,7 +31,8 @@ class BookingService {
         packages, 
         PeopleNo, 
         addonServices, 
-        user, 
+        user,
+        promoCode,
         yacht 
       } = BookingDetails;
 
@@ -79,6 +84,28 @@ class BookingService {
     const anchoragePrice = isPeakTime ? yachtDetails.price.anchoring.peakTime : yachtDetails.price.anchoring.nonPeakTime;
 
     let totalAmount = (sailingPrice * sailingHours) + (anchoragePrice * anchorageHours);
+
+    // calculate total discount amount if applied any Promo code
+    let discountPromoAmount = 0;
+    if (promoCode) {
+      if (!user) {
+        throw new Error("User is required");
+      }
+      const promoResult = await PaymentService.validateAndApplyPromo(
+        promoCode,
+        user,
+        role.role,
+        totalAmount
+      );
+      
+      if (promoResult.isValid) {
+        discountPromoAmount = promoResult.discount;
+        totalAmount = totalAmount - discountPromoAmount;
+      } else {
+        throw new Error(promoResult.message);
+      }
+    }
+
     // Addon services cost
     if (addonServices && addonServices.length > 0) {
       const addonsCost = addonServices.reduce((sum, addon) => {
@@ -87,6 +114,7 @@ class BookingService {
       }, 0);
       totalAmount += addonsCost;
     }
+      
 
     // Fetch user details
     const userDetails = await User.findById(user);
@@ -105,6 +133,7 @@ class BookingService {
           name : yachtDetails.name,
           images : yachtDetails.images,
           YachtType: yachtDetails.YachtType,
+          promoCode,
           capacity: yachtDetails.capacity,
           customerName: userDetails.name,
           customerEmail: userDetails.email,
