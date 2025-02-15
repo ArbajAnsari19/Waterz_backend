@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { UserprofileService, AdminService, Filter } from '../services/userServices';
-import { TimeFrame } from '../utils/trip';
+import { TimeFrame,LocationType,AddonService,PackageType } from '../utils/trip';
+import UserService from '../services/userServices';
 
 export interface EarningFilter {
     timeframe: TimeFrame;
@@ -273,6 +274,100 @@ export class userController {
 
 export class adminController{
 
+    // static async createAdminYacht(req: Request, res: Response): Promise<void> {
+    //     try {
+    //         const {
+    //             name,
+    //             images,
+    //             description,
+    //             capacity,
+    //             mnfyear,
+    //             dimension,
+    //             location,
+    //             pickupat,
+    //             YachtType,
+    //             crewCount,
+    //             amenities,
+    //             availability,
+    //             price,
+    //             packageTypes,
+    //             addonServices,
+    //             owner  // Admin can specify owner
+    //         } = req.body;
+    
+    //         // Validate required fields
+    //         if (!name || !images || !location || !YachtType || !owner) {
+    //             throw new Error('Missing required fields');
+    //         }
+    
+    //         // Validate location
+    //         if (!Object.values(LocationType).includes(location)) {
+    //             throw new Error('Invalid location');
+    //         }
+    
+    //         // Validate price structure
+    //         if (!price?.sailing?.peakTime || !price?.sailing?.nonPeakTime || 
+    //             !price?.anchoring?.peakTime || !price?.anchoring?.nonPeakTime) {
+    //             throw new Error('Invalid price structure');
+    //         }
+    
+    //         // Validate addon services
+    //         if (addonServices) {
+    //             addonServices.forEach((addon: { service: string; pricePerHour: number }) => {
+    //                 if (!addon.service || typeof addon.pricePerHour !== 'number') {
+    //                     throw new Error('Invalid addon service structure');
+    //                 }
+    //                 if (!Object.values(AddonService).includes(addon.service as AddonService)) {
+    //                     throw new Error(`Invalid addon service: ${addon.service}`);
+    //                 }
+    //             });
+    //         }
+    
+    //         // Validate packageTypes
+    //         if (packageTypes && Array.isArray(packageTypes)) {
+    //             const invalidPackage = packageTypes.some(
+    //                 pkg => !Object.values(PackageType).includes(pkg)
+    //             );
+    //             if (invalidPackage) {
+    //                 throw new Error('Invalid package type in list');
+    //             }
+    //         }
+    
+    //         const yachtDetails = {
+    //             owner,
+    //             name,
+    //             images,
+    //             description,
+    //             capacity,
+    //             mnfyear,
+    //             YachtType,
+    //             dimension,
+    //             location,
+    //             pickupat,
+    //             crewCount,
+    //             amenities,
+    //             availability,
+    //             price,
+    //             addonServices: addonServices || [],
+    //             packageTypes,
+    //             isVerifiedByAdmin: 'accepted'
+    //         };
+    
+    //         const yacht = await AdminService.createAdminYacht(yachtDetails);
+    //         console.log("yacht",yacht);
+    //         await UserService.addYachtToOwner(owner, yacht._id);
+    
+    //         res.status(201).json({ 
+    //             message: "Yacht created successfully", 
+    //             yachtId: yacht._id 
+    //         });
+    //     } catch (error) {
+    //         res.status(400).json({ 
+    //             message: (error as Error).message 
+    //         });
+    //     }
+    // }
+
     static async getAllYatchs(req: Request, res: Response): Promise<void> {
         try {
             const yatchs = await AdminService.getAllYatchs();
@@ -283,7 +378,6 @@ export class adminController{
     }
 
     static async updateAgentProfile(req: Request, res: Response): Promise<void> {
-        console.log("bodyy", req.body)
         try {
             const userId = req.params.id;
             const updateDetails = req.body;
@@ -317,7 +411,7 @@ export class adminController{
             message: (error as Error).message 
           });
         }
-      }
+    }
 
     static async updateSuperAgentProfile(req: Request, res: Response): Promise<void> {
         try {

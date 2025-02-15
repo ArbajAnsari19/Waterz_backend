@@ -844,6 +844,38 @@ class UserService {
 
 class AdminService {
 
+  // static async createAdminYacht(yachtData: IYacht): Promise<IYacht> {
+  //   try {
+  //     // Validate owner exists
+  //     const owner = await Owner.findById(yachtData.owner);
+  //     if (!owner) {
+  //       throw new Error("Owner not found");
+  //     }
+
+  //     // Create yacht with admin verification
+  //     const yacht = new Yacht({
+  //       ...yachtData,
+  //       isVerifiedByAdmin: 'accepted',
+  //       createdAt: new Date(),
+  //       updatedAt: new Date()
+  //     });
+
+  //     // Save yacht
+  //     const savedYacht = await yacht.save();
+
+  //     // Add yacht to owner's list
+  //     await Owner.findByIdAndUpdate(
+  //       yachtData.owner,
+  //       { $push: { yachts: savedYacht._id } }
+  //     );
+
+  //     return savedYacht;
+  //   } catch (error) {
+  //     throw new Error("Error creating yacht: " + (error as Error).message);
+  //   }
+  // }
+  
+
   static async updateAgentProfile(userId: string, userData: Partial<IAgent>): Promise<IAgent | null> {
     try{
       const { age,experience,address,accountHolderName,accountNumber,bankName,ifscCode,imgUrl,commissionRate } = userData;
