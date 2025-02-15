@@ -31,7 +31,7 @@ export interface IYacht {
   packageTypes: PackageType[];  
   mnfyear?: number;
   dimension?: string;
-  crews?:number;
+  crewCount?:number;
   images: string[];
   createdAt?: Date;
   YachtType: string;
@@ -85,7 +85,7 @@ export const yachtSchema = new mongoose.Schema<IYacht>({
     required: true
   },
   dimension: { type: String },
-  crews:  { type: Number, required: true }, // Array of crew objects
+  crewCount:  { type: Number, required: true }, // Array of crew objects
   images: { type: [String], required: true }, // Array of image URLs
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
