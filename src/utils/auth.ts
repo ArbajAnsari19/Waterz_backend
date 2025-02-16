@@ -6,7 +6,7 @@ export const generateToken = (userId: string, role: string): string => {
   const payload = { id: userId, role };
   const secret = process.env.JWT_SECRET as string;
 
-  return jwt.sign(payload, secret, { expiresIn: '1h' });
+  return jwt.sign(payload, secret);
 };
 
 // Verify JWT Token
