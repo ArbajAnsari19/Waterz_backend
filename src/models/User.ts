@@ -120,8 +120,7 @@ const agentSchema = new mongoose.Schema({
   accountNumber: { type: String, required: false },
   bankName: { type: String, required: false },
   ifscCode: { type: String, required: false },
-  imgUrl: { type: String, required: false }
-});
+  imgUrl: {type: [String],default: [],},});
 
 const superAgentSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -142,7 +141,7 @@ const superAgentSchema = new mongoose.Schema({
   accountNumber: { type: String, required: false },
   bankName: { type: String, required: false },
   ifscCode: { type: String, required: false },
-  imgUrl: { type: String, required: false },
+  imgUrl: {type: [String],default: [],},
   isVerifiedByAdmin: { type: String, enum: ["accepted", "requested", "denied"], default:"requested", required: true },
   isVerified: { type: Boolean, default: false },
   referralCode : { type: String, required: true },

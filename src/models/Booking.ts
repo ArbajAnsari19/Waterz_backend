@@ -2,9 +2,6 @@ import mongoose from "mongoose";
 import { AddonService } from '../utils/trip';
 import { PackageType } from '../utils/trip';
 
-interface Packages {
-  type: PackageType;
-}
 
 export interface IBooking extends mongoose.Document {
   customerName: string;
@@ -15,9 +12,7 @@ export interface IBooking extends mongoose.Document {
   agent?: string;
   bookingDateTime?: Date;
   location: string;
-  tripType: string; 
-  timeOption: number;  
-  packages: Packages;
+  packages: PackageType;
   startDate: Date;
   startTime: Date;
   endDate: Date;
@@ -59,14 +54,10 @@ const bookingSchema = new mongoose.Schema({
   agent: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent', default: null }, // Optional agent
   bookingDate: { type: Date, required: false },
   location: { type: String, required: true },
-  tripType: { type: String, required: true },
-  timeOption: { type: Number, required: true },
   packages: {
-    type: {
       type: String,
       enum: Object.values(PackageType),
       required: true
-    }
   },
   startDate: { type: Date, required: true },
   startTime: { type: Date, required: true },
@@ -74,22 +65,17 @@ const bookingSchema = new mongoose.Schema({
   images: { type: [String], required: true },
   name: { type: String, required: true },
   YachtType: { type: String, required: false },
-  addonServices: [{
-    service: {
+  addonServices: {
+    type: [{
       type: String,
-      enum: Object.values(AddonService),
-      required: true
-    },
-    hours: {
-      type: Number,
-      required: true
-    }
-  }],
+      enum: Object.values(AddonService)
+    }],
+    default: []
+  },
   capacity: { type: Number, required: true },
   razorpayOrderId: { type: String, required: true },
   PeopleNo: { type: Number, required: true },
   totalAmount: { type: Number, required: true },
-  services: { type: [String], required: true },
   isAgentBooking: { type: Boolean, default: false },
   paymentStatus: { 
     type: String, 

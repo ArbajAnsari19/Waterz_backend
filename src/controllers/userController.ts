@@ -176,7 +176,7 @@ export class userController {
             const userId = req.currentUser.id;
             const updateDetails = req.body;
             const user = await UserprofileService.updateAgentProfile(userId, updateDetails);
-            res.status(200).json({ message: 'Profile Updated' });
+            res.status(200).json({ message: 'Profile Updated', user });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }
@@ -367,6 +367,16 @@ export class adminController{
     //         });
     //     }
     // }
+
+    static async getYatchDetail(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+            const yacht = await AdminService.detailsYatch(id);
+            res.status(200).json({ yacht });
+          } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+          }
+    }
 
     static async deactivatePromoCode(req: Request, res: Response): Promise<void> {
         try {

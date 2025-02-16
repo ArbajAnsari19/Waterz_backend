@@ -42,6 +42,7 @@ router.get("/superAgent-detail/:id", authenticateToken, authenticateAdmin,adminC
 router.post("/generate-promo-code", authenticateToken, authenticateAdmin, adminController.createPromoCode);
 router.get("/getAllPromoCodes", authenticateToken, authenticateAdmin, adminController.getAllPromoCodes);
 router.post("/deactivate-promo-code/:id", authenticateToken, authenticateAdmin, adminController.deactivatePromoCode);
+router.get("/getYatchDetail/:id", authenticateToken, authenticateAdmin, adminController.getYatchDetail);
 
 // router.post("/createAdminYacht", authenticateToken, authenticateAdmin, adminController.createAdminYacht);
 

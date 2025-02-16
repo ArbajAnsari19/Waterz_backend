@@ -24,7 +24,8 @@ export class BookingController {
                 addonServices: req.body.addonServices,
                 user: req.currentUser.id,
                 promoCode: req.body.promoCode,
-                yacht: req.params.id
+                yacht: req.body.yacht,
+                YachtType: req.body.YachtType
             }
             const role = req.currentUser.role;
             const { booking, orderId } = await BookingService.createBooking(BookingDetails,role);

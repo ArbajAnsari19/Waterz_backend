@@ -41,7 +41,7 @@ app.get("/test", (req, res) => {
 app.use("/auth", authRoutes);
 app.use("/customer", customerRoutes);
 app.use("/owner", ownerRoutes);
-app.use("agent",agentRoutes);
+app.use("/agent",agentRoutes);
 app.use("/superagent",superAgentRoutes);
 app.use("/admin",adminRoutes);
 app.use("/query",queryRoutes)
