@@ -35,9 +35,11 @@ export class BookingController {
     }
 
     static async serchIdealYatchs(req: Request, res: Response): Promise<void> {
+        console.log("req body", req.body)
         try {
             const { startDate, startTime, location, YachtType, capacity, PeopleNo, addonServices,packages } = req.body;
             const filterDeatils = { startDate, startTime, location, YachtType, capacity, PeopleNo, addonServices,packages};
+            console.log("filters", filterDeatils)
             const yatches =await BookingService.searchIdealYachts(filterDeatils);
             res.status(200).json({ yatches });
         } catch (error) {

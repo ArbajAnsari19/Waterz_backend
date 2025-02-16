@@ -325,25 +325,29 @@ class BookingService {
   static async searchIdealYachts(searchParams: Partial<IBooking>): Promise<IYacht[]> {
     try {
       const { startDate, startTime, location, YachtType, PeopleNo, addonServices, packages } = searchParams;
-
+  
       // Validate inputs
-      if (!startDate || !startTime ) {
-        throw new Error("Start date, time  are required");
+      if (!startDate || !startTime) {
+        throw new Error("Start date, time are required");
       }
-
-    // Extract sailing and anchoring times from package
-    const getPackageDuration = (packageType: PackageType): { sailingHours: number, anchorageHours: number } => {
-      const [sailing, anchoring] = packageType.split('_hour').map(part => {
-        const match = part.match(/(\d+\.?\d*)/);
-        return match ? parseFloat(match[0]) : 0;
-      });
-      return { sailingHours: sailing, anchorageHours: anchoring };
-    };
-    if(!packages) {
-      throw new Error("Packages are required");
-    }
-    const { sailingHours, anchorageHours } = getPackageDuration(packages.type);
-    const totalHours = sailingHours + anchorageHours;
+  
+      // Convert packages string to expected format
+      const packageType = typeof packages === 'string' ? packages : packages?.type;
+      if (!packageType) {
+        throw new Error("Package type is required");
+      }
+  
+      // Extract sailing and anchoring times from package
+      const getPackageDuration = (pkgType: string): { sailingHours: number, anchorageHours: number } => {
+        const [sailing, anchoring] = pkgType.split('_hour').map(part => {
+          const match = part.match(/(\d+\.?\d*)/);
+          return match ? parseFloat(match[0]) : 0;
+        });
+        return { sailingHours: sailing, anchorageHours: anchoring };
+      };
+  
+      const { sailingHours, anchorageHours } = getPackageDuration(packageType);
+      const totalHours = sailingHours + anchorageHours;
 
     // Calculate end date and time
     const startDateTime = new Date(`${startDate}T${startTime}`);
