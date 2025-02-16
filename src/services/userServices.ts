@@ -697,9 +697,7 @@ class UserService {
   static generateToken(userId: string, email: string, role: string ): string {
     const payload = { id: userId, email, role };
     try {
-      return jwt.sign(payload, process.env.JWT_SECRET as string, {
-        expiresIn: "3d",
-      });
+      return jwt.sign(payload, process.env.JWT_SECRET as string);
     } catch (error) {
       throw new Error("Error generating token: " + (error as Error).message);
     }
