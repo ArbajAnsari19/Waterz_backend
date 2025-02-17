@@ -210,7 +210,7 @@ class UserprofileService{
 
   }
   
-  static async updateAgentProfile(userId: string, userData: Partial<IAgent>): Promise<IUser | null> {
+  static async updateAgentProfile(userId: string, userData: Partial<IAgent>): Promise<IAgent | null> {
     try {
       const { age,experience,address,accountHolderName,accountNumber,bankName,ifscCode,imgUrl } = userData;
       return await Agent.findByIdAndUpdate(userId, {
@@ -767,7 +767,7 @@ class UserService {
   static async verifyOTP(userId: string, otp: string,role:string): Promise<{ message: string }> {
     try {
       const Role = findRoleById(role);
-      console.log("role is here : ", Role);
+      console.log("role is here : ", role);
       const user = await (Role as typeof User ||  Role as typeof Owner || Role as typeof Agent ||Role as typeof SuperAgent).findById(userId);
       console.log("User is here : ", user);
       if (user && user.otp === otp && user.otpExpiresAt && user.otpExpiresAt > new Date()) {
@@ -873,6 +873,13 @@ class AdminService {
   //   }
   // }
   
+  static async detailsYatch(yatchId: string): Promise<IYacht | null> {
+    try {
+      return await Yacht.findById(yatchId);
+    } catch (error) {
+      throw new Error("Error getting yatch: " + (error as Error).message);
+    }
+  }
 
   static async updateAgentProfile(userId: string, userData: Partial<IAgent>): Promise<IAgent | null> {
     try{
