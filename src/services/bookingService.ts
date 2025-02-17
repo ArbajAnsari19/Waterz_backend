@@ -76,13 +76,21 @@ class BookingService {
       const yachtDetails = await Yacht.findById(yacht);
       if (!yachtDetails) throw new Error("Yacht not found");
 
-      // Validate packages
-      if (!packages) {
-        throw new Error("Packages are required");
+      const packageType = typeof packages === 'string' ? packages : packages?.type;
+      if (!packageType) {
+        throw new Error("Package type is required");
       }
-
-      // Calculate package duration and booking times
-      const { sailingHours, anchorageHours, totalHours } = this.getPackageDuration(packages.type);
+  
+      // Extract sailing and anchoring times from package
+      const getPackageDuration = (pkgType: string): { sailingHours: number, anchorageHours: number } => {
+        const [sailing, anchoring] = pkgType.split('_hour').map(part => {
+          const match = part.match(/(\d+\.?\d*)/);
+          return match ? parseFloat(match[0]) : 0;
+        });
+        return { sailingHours: sailing, anchorageHours: anchoring };
+      };
+      const { sailingHours, anchorageHours } = getPackageDuration(packageType);
+      const totalHours = sailingHours + anchorageHours;
       const startDateTime = new Date(`${startDate}T${startTime}`);
       const endDateTime = new Date(startDateTime.getTime() + (totalHours * 60 * 60 * 1000));
 

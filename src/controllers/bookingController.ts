@@ -14,6 +14,7 @@ export class BookingController {
     }
     
     static async createBooking(req: Request, res: Response): Promise<void> {
+        console.log("req body", req.body)
         try {
             const BookingDetails = {
                 startDate: req.body.startDate,
