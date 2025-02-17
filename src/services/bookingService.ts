@@ -40,13 +40,40 @@ class BookingService {
       return (sailingPrice * sailingHours) + (anchoragePrice * anchorageHours);
     }
   
-    // Helper: Calculate addon services cost
-    private static calculateAddonCost(yachtDetails: IYacht, addonServices?: Array<{ service: string; hours: number }>): number {
+    //   // Helper: Calculate addon services cost
+    //   private static calculateAddonCost(yachtDetails: IYacht, addonServices?: Array<{ service: string; hours: number }>): number {
+    //     if (!addonServices || addonServices.length === 0) return 0;
+    //     const CaluclatedAddonPrice = addonServices.reduce((sum, addon) => {
+    //       const yachtAddon = yachtDetails.addonServices.find(a => a.service === addon.service);
+    //       return sum + (yachtAddon ? yachtAddon.pricePerHour * addon.hours : 0);
+    //     }, 0);
+    //     console.log("AddonPrice is here : ",CaluclatedAddonPrice)
+    //   return CaluclatedAddonPrice
+    // }
+
+    private static calculateAddonCost(
+      yachtDetails: IYacht,
+      totalHours: number,
+      addonServices?: Array<{ service: string } | string>
+    ): number {
       if (!addonServices || addonServices.length === 0) return 0;
-      return addonServices.reduce((sum, addon) => {
-        const yachtAddon = yachtDetails.addonServices.find(a => a.service === addon.service);
-        return sum + (yachtAddon ? yachtAddon.pricePerHour * addon.hours : 0);
+      const calculatedAddonPrice = addonServices.reduce((sum, addon) => {
+        let serviceName: string;
+        // Use totalHours as duration regardless of addon type
+        if (typeof addon === 'string') {
+          serviceName = addon;
+        } else {
+          serviceName = addon.service;
+        }
+        const yachtAddon = yachtDetails.addonServices.find(a => a.service === serviceName);
+        return sum + (yachtAddon ? yachtAddon.pricePerHour * totalHours : 0);
       }, 0);
+      console.log("AddonPrice is here : ", calculatedAddonPrice);
+      return calculatedAddonPrice;
+    }
+
+    private static calculateGst(totalAmount: number, totalTaxPercentage : number): number {
+      return totalAmount * (totalTaxPercentage / 100);
     }
 
     // Helper: Apply promo discount returning discount amount and adjusted total
@@ -59,7 +86,7 @@ class BookingService {
       throw new Error(promoResult.message);
     }
 
-    static async createBooking(BookingDetails: Partial<IBooking>,role : Role): Promise<{booking: IBooking, orderId: string }> {
+    static async createBooking(BookingDetails: Partial<IBooking>,role : Role): Promise<{booking: IBooking, orderId: string,totalAmount: number,packageAmount: number, addonCost: number, gstAmount: number }> {
       try {
         const { 
           startDate, 
@@ -107,21 +134,23 @@ class BookingService {
         throw new Error("The yacht is not available for the selected dates and times");
       }
       // Calculate pricing
-      const isPeakTime = true; // TODO: Implement peak time logic
-      let totalAmount = this.calculateBasePrice(yachtDetails, sailingHours, anchorageHours, isPeakTime);
+      const isPeakTime = false; // TODO: Implement peak time logic
+      console.log("sailing Hours" , sailingHours)
+      console.log("anchorage Hours" , anchorageHours)
+      console.log("yachtDetails" , yachtDetails)
+      let totalAmount = 0;
+      const packageAmount = this.calculateBasePrice(yachtDetails, sailingHours, anchorageHours, isPeakTime);
+      totalAmount += packageAmount;
+      console.log("Total Amount is here : ",totalAmount)
       // Add addon services cost
-      totalAmount += this.calculateAddonCost(yachtDetails, addonServices);
+      const addonCost = this.calculateAddonCost(yachtDetails, totalHours, addonServices);
+      totalAmount += addonCost;
+      console.log("Total Amount after addon is here : ",totalAmount)
 
-      // Apply promo discount if available
-      let discountPromoAmount = 0;
-      if (promoCode) {
-        if (!user) {
-          throw new Error("User is required for promo code application");
-        }
-        const promo = await this.applyPromoDiscount(promoCode, user, role.role, totalAmount);
-        discountPromoAmount = promo.discount;
-        totalAmount = promo.adjustedAmount;
-      }
+      // Add gst cost
+      const totalTaxPercentage = 18;
+      const gstAmount = this.calculateGst(totalAmount, totalTaxPercentage);
+      totalAmount += gstAmount;
 
   
       // Fetch user details
@@ -171,7 +200,14 @@ class BookingService {
         const owner = yachtDetails.owner;
         await Owner.findByIdAndUpdate(owner, { $push: { bookings: booking._id } });
         
-        return { booking, orderId: order.id };
+        return { 
+          booking,
+          orderId: order.id,
+          totalAmount,
+          packageAmount,
+          addonCost,
+          gstAmount
+        };
   
       } catch (error) {
         throw new Error((error as Error).message);
@@ -661,6 +697,44 @@ class BookingService {
         
         return { booking, orderId: order.id };
 
+      } catch (error) {
+        throw new Error((error as Error).message);
+      }
+    }
+
+    static async validatePromocode(
+      promoCode: string,
+      user: string,
+      grandTotal: number,
+      bookingId: string
+    ): Promise<{ discount: number, discountType: string,newTotal: number }> {
+      try {
+        const promoResult = await PaymentService.validateAndApplyPromo(promoCode, user, "customer", grandTotal);
+    
+        if (promoResult.isValid) {
+          let newTotal: number;
+          // Calculate new total based on discount type: FIXED or PERCENTAGE
+          if (promoResult.discountType === "FIXED") {
+            newTotal = grandTotal - promoResult.discount;
+          } else if (promoResult.discountType === "PERCENTAGE") {
+            newTotal = grandTotal - (grandTotal * promoResult.discount / 100);
+          } else {
+            newTotal = grandTotal;
+          }
+          await Booking.findByIdAndUpdate(bookingId, { totalAmount: newTotal });
+          return { discount: promoResult.discount, discountType: promoResult.discountType, newTotal: newTotal };
+        }
+        throw new Error(promoResult.message);
+      } catch (error) {
+        throw new Error((error as Error).message);
+      }
+    }
+
+    static async getBookingTotal(bookingId: string): Promise<number> {
+      try {
+        const booking = await Booking.findById(bookingId);
+        if (!booking) throw new Error("Booking not found");
+        return booking.totalAmount;
       } catch (error) {
         throw new Error((error as Error).message);
       }

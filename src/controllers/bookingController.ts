@@ -28,8 +28,8 @@ export class BookingController {
                 YachtType: req.body.YachtType
             }
             const role = req.currentUser.role;
-            const { booking, orderId } = await BookingService.createBooking(BookingDetails,role);
-            res.status(201).json({ message: 'Booking created successfully. Please complete the payment.', booking, orderId });
+            const { booking, orderId,totalAmount,packageAmount,addonCost, gstAmount } = await BookingService.createBooking(BookingDetails,role);
+            res.status(201).json({ message: 'Booking created successfully. Please complete the payment.', booking, orderId,totalAmount,packageAmount,addonCost, gstAmount });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }
@@ -65,6 +65,18 @@ export class BookingController {
             }
             const { booking, orderId } = await BookingService.createAgentBooking(BookingDetails,customerData);
             res.status(201).json({ message: 'Booking created successfully. Please complete the payment.', booking, orderId });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async validatePromocode(req: Request, res: Response): Promise<void> {
+        try {
+            const { promoCode,bookingId } = req.body;
+            const grandTotal = await BookingService.getBookingTotal(bookingId); 
+            const userId = req.currentUser.id;
+            const { discount,discountType,newTotal } = await BookingService.validatePromocode(promoCode,userId,grandTotal,bookingId);
+            res.status(200).json({ discount,discountType,newTotal });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }
