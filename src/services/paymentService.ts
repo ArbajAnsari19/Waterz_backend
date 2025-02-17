@@ -432,6 +432,7 @@ class PaymentService {
     userType: "agent" | "customer",
     bookingAmount: number
   ): Promise<{
+    discountType: "PERCENTAGE" | "FIXED" | "FAILED";
     isValid: boolean;
     discount: number;
     message: string;
@@ -440,7 +441,7 @@ class PaymentService {
       const promo = await Promo.findOne({ code: promoCode, isActive: true });
       
       if (!promo) {
-        return { isValid: false, discount: 0, message: "Invalid promo code" };
+        return { discountType:"FAILED",isValid: false, discount: 0, message: "Invalid promo code" };
       }
 
       // Convert userId to ObjectId
@@ -448,17 +449,17 @@ class PaymentService {
   
       // Check expiry
       if (new Date() > promo.expiryDate) {
-        return { isValid: false, discount: 0, message: "Promo code expired" };
+        return { discountType:"FAILED",isValid: false, discount: 0, message: "Promo code expired" };
       }
 
       // Check total usage limit
       if (promo.totalUsageCount >= promo.totalUsageLimit) {
-        return { isValid: false, discount: 0, message: "Promo code usage limit reached" };
+        return { discountType:"FAILED",isValid: false, discount: 0, message: "Promo code usage limit reached" };
       }
   
       // Check user type validity
       if (promo.validFor !== "all" && promo.validFor !== userType) {
-        return { isValid: false, discount: 0, message: "Promo not valid for this user type" };
+        return {discountType:"FAILED", isValid: false, discount: 0, message: "Promo not valid for this user type" };
       }
   
       // Check targeted users with ObjectId comparison
@@ -467,14 +468,14 @@ class PaymentService {
           id.equals(userObjectId)
         );
         if (!isTargetedUser) {
-          return { isValid: false, discount: 0, message: "Promo not valid for this user" };
+          return { discountType:"FAILED",isValid: false, discount: 0, message: "Promo not valid for this user" };
         }
       }
   
       // Check user usage limit with ObjectId comparison
       const userUsage = promo.userUsage.find(u => u.userId.equals(userObjectId));
       if (userUsage?.usageCount && userUsage?.usageCount >= promo.maxUsagePerUser) {
-        return { isValid: false, discount: 0, message: "Usage limit exceeded for this user" };
+        return {discountType:"FAILED", isValid: false, discount: 0, message: "Usage limit exceeded for this user" };
       }
   
       // Calculate discount
@@ -503,6 +504,7 @@ class PaymentService {
       );
   
       return {
+        discountType: promo.discountType,
         isValid: true,
         discount,
         message: "Promo applied successfully"
