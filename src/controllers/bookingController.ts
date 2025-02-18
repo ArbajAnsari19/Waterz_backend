@@ -77,11 +77,11 @@ export class BookingController {
             const bookingId = req.body.coupon.bookingId;
             console.log("promoCode", promoCode)
             console.log("bookingId", bookingId)
-            const grandTotal = await BookingService.getBookingTotal(bookingId);
-            console.log("grandTotal", grandTotal) 
+            const {totalAmount,razorpayId} = await BookingService.getBookingTotalandRazorPayId(bookingId);
+            console.log("grandTotal", totalAmount) 
             const userId = req.currentUser.id;
-            const { discount,discountType,newTotal } = await BookingService.validatePromocode(promoCode,userId,grandTotal,bookingId);
-            res.status(200).json({ discount,discountType,newTotal });
+            const { discount,discountType,newTotal,orderId } = await BookingService.validatePromocode(promoCode,userId,totalAmount,bookingId,razorpayId);
+            res.status(200).json({ discount,discountType,newTotal,orderId });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }

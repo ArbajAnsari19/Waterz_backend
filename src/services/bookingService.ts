@@ -6,6 +6,7 @@ import User,{ Agent } from "../models/User";
 import Razorpay from "razorpay";
 import { PackageType } from "../utils/trip";
 import PaymentService from "./paymentService";
+import Payment from "../models/Payment";
 
 interface customerData {
   customerName: string;
@@ -706,16 +707,24 @@ class BookingService {
       promoCode: string,
       user: string,
       grandTotal: number,
-      bookingId: string
-    ): Promise<{ discount: number, discountType: string, newTotal: number }> {
+      bookingId: string,
+      razorpayId: string
+    ): Promise<{ discount: number, discountType: string, newTotal: number ,orderId:string}> {
       try {
         const promoResult = await PaymentService.validateAndApplyPromo(promoCode, user, "customer", grandTotal);
     
         if (promoResult.isValid) {
-          // Use the discount directly, regardless of type
           const newTotal = grandTotal - promoResult.discount;
-          await Booking.findByIdAndUpdate(bookingId, { totalAmount: newTotal });
-          return { discount: promoResult.discount, discountType: promoResult.discountType, newTotal };
+
+            // Create a new Razorpay order with the updated amount
+            const newOrder = await razorpay.orders.create({
+              amount: newTotal * 100, // Amount in paise
+              currency: "INR",
+              receipt: bookingId,
+            });
+          await Booking.findByIdAndUpdate(bookingId, { totalAmount: newTotal, razorpayOrderId: newOrder.id });
+          console.log("razorPayId updated and successfully added here is new one : ",newOrder.id)
+          return { discount: promoResult.discount, discountType: promoResult.discountType, newTotal, orderId :newOrder.id  };
         }
         throw new Error(promoResult.message);
       } catch (error) {
@@ -723,15 +732,18 @@ class BookingService {
       }
     }
 
-    static async getBookingTotal(bookingId: string): Promise<number> {
+    static async getBookingTotalandRazorPayId(bookingId: string): Promise<{totalAmount:number,razorpayId:string}> {
       try {
         console.log("getBookingTotal bookingId:", bookingId);
         const booking = await Booking.findById(bookingId);
         if (!booking) {
-          console.error("Booking not found for id:", bookingId);
-          throw new Error("Booking not found");
+          console.error("Booking details not found for id:", bookingId);
+          throw new Error("Booking details not found");
         }
-        return booking.totalAmount;
+        const razorpayId =booking.razorpayOrderId || "",
+        totalAmount = booking.totalAmount;
+        
+        return {totalAmount,razorpayId};
       } catch (error) {
         throw new Error((error as Error).message);
       }
