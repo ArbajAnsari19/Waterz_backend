@@ -1,12 +1,11 @@
 import { IBooking } from "../models/Booking";
 import Yacht, {IYacht} from "../models/Yacht";
-import Booking, {BookingAgent,IBookingAgent} from "../models/Booking";
+import Booking from "../models/Booking";
 import Owner from "../models/User";
 import User,{ Agent } from "../models/User";
 import Razorpay from "razorpay";
 import { PackageType } from "../utils/trip";
 import PaymentService from "./paymentService";
-import { ConversationsAgentOnlinePingPostRequest } from "@getbrevo/brevo";
 
 interface customerData {
   customerName: string;
@@ -708,22 +707,15 @@ class BookingService {
       user: string,
       grandTotal: number,
       bookingId: string
-    ): Promise<{ discount: number, discountType: string,newTotal: number }> {
+    ): Promise<{ discount: number, discountType: string, newTotal: number }> {
       try {
         const promoResult = await PaymentService.validateAndApplyPromo(promoCode, user, "customer", grandTotal);
     
         if (promoResult.isValid) {
-          let newTotal: number;
-          // Calculate new total based on discount type: FIXED or PERCENTAGE
-          if (promoResult.discountType === "FIXED") {
-            newTotal = grandTotal - promoResult.discount;
-          } else if (promoResult.discountType === "PERCENTAGE") {
-            newTotal = grandTotal - (grandTotal * promoResult.discount / 100);
-          } else {
-            newTotal = grandTotal;
-          }
+          // Use the discount directly, regardless of type
+          const newTotal = grandTotal - promoResult.discount;
           await Booking.findByIdAndUpdate(bookingId, { totalAmount: newTotal });
-          return { discount: promoResult.discount, discountType: promoResult.discountType, newTotal: newTotal };
+          return { discount: promoResult.discount, discountType: promoResult.discountType, newTotal };
         }
         throw new Error(promoResult.message);
       } catch (error) {
@@ -733,8 +725,12 @@ class BookingService {
 
     static async getBookingTotal(bookingId: string): Promise<number> {
       try {
+        console.log("getBookingTotal bookingId:", bookingId);
         const booking = await Booking.findById(bookingId);
-        if (!booking) throw new Error("Booking not found");
+        if (!booking) {
+          console.error("Booking not found for id:", bookingId);
+          throw new Error("Booking not found");
+        }
         return booking.totalAmount;
       } catch (error) {
         throw new Error((error as Error).message);
