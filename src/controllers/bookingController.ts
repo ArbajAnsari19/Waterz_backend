@@ -73,8 +73,13 @@ export class BookingController {
 
     static async validatePromocode(req: Request, res: Response): Promise<void> {
         try {
-            const { promoCode,bookingId } = req.body;
-            const grandTotal = await BookingService.getBookingTotal(bookingId); 
+            console.log(req.body);
+            const promoCode = req.body.coupon.promoCode;
+            const bookingId = req.body.coupon.bookingId;
+            console.log("promoCode", promoCode)
+            console.log("bookingId", bookingId)
+            const grandTotal = await BookingService.getBookingTotal(bookingId);
+            console.log("grandTotal", grandTotal) 
             const userId = req.currentUser.id;
             const { discount,discountType,newTotal } = await BookingService.validatePromocode(promoCode,userId,grandTotal,bookingId);
             res.status(200).json({ discount,discountType,newTotal });
