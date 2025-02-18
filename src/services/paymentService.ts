@@ -104,8 +104,8 @@ class PaymentService {
       console.error('Error updating owner bookings:', error);
       throw new Error('Failed to update owner bookings');
     }
-    
-    await PaymentService.createCalendarEvent(usermail,owner,booking);
+    const userEmailObject = { email: usermail };
+    await PaymentService.createCalendarEvent(userEmailObject,owner,booking);
 
     // Send email notifications
     await PaymentService.sendEmailNotification(usermail, booking);

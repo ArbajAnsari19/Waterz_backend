@@ -151,6 +151,7 @@ class BookingService {
       const totalTaxPercentage = 18;
       const gstAmount = this.calculateGst(totalAmount, totalTaxPercentage);
       totalAmount += gstAmount;
+      console.log("Total Amount after gst is here : ",totalAmount)
 
   
       // Fetch user details
