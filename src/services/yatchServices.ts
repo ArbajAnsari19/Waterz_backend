@@ -36,7 +36,7 @@ class YatchService {
 
         const allBookings = await Booking.find({
           yacht: { $in: yachtIds },
-          status: 'confirmed'
+          paymentStatus : "completed"
         }).populate('yacht');
 
         const now = new Date();
@@ -67,7 +67,7 @@ class YatchService {
         }
     }
 
-    static async topYatch(page: number = 1, limit: number = 4): Promise<IYacht[]> {
+    static async topYatch(): Promise<IYacht[]> {
         try {
           const yachts = await Yacht.aggregate([
             {
@@ -97,12 +97,6 @@ class YatchService {
                 averageRating: -1,
                 bookingCount: -1
               }
-            },
-            {
-              $skip: (page - 1) * limit
-            },
-            {
-              $limit: limit
             }
           ]);
     
@@ -161,6 +155,47 @@ class YatchService {
         } catch (error) {
           throw new Error((error as Error).message);
         }
+    }
+
+    static async revenueAgent(agent: string): Promise<EarningsAnalytics> {
+      try {
+        // Find all bookings for this agent with completed payment
+        const allBookings = await Booking.find({
+          agent: agent,
+          paymentStatus: "completed"
+        }).populate('yacht');
+        
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+        const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+        
+        // Filter bookings for last 7 & 30 days
+        const sevenDaysBookings = allBookings.filter(booking =>
+          //@ts-ignore
+          booking.createdAt >= sevenDaysAgo
+        );
+        const thirtyDaysBookings = allBookings.filter(booking =>
+          //@ts-ignore
+          booking.createdAt >= thirtyDaysAgo
+        );
+        
+        // Calculate earnings over the defined periods
+        const sevenDaysEarnings = sevenDaysBookings.reduce((sum, booking) => sum + booking.totalAmount, 0);
+        const thirtyDaysEarnings = thirtyDaysBookings.reduce((sum, booking) => sum + booking.totalAmount, 0);
+        const totalEarnings = allBookings.reduce((sum, booking) => sum + booking.totalAmount, 0);
+        
+        return {
+          sevenDaysEarnings,
+          thirtyDaysEarnings,
+          totalEarnings,
+          sevenDaysBookings,
+          thirtyDaysBookings,
+          allBookings
+        };
+        
+      } catch (error) {
+        throw new Error((error as Error).message);
+      }
     }
   }
 export default YatchService;

@@ -1,7 +1,7 @@
 import { IBooking } from "../models/Booking";
 import Yacht, {IYacht} from "../models/Yacht";
 import Booking from "../models/Booking";
-import Owner from "../models/User";
+import Owner, { SuperAgent } from "../models/User";
 import User,{ Agent } from "../models/User";
 import Razorpay from "razorpay";
 import { PackageType } from "../utils/trip";
@@ -9,11 +9,6 @@ import PaymentService from "./paymentService";
 import Payment from "../models/Payment";
 import { getEffectivePrice } from "../utils/timeUtils";
 
-interface customerData {
-  customerName: string;
-  customerPhone: string;
-  customerEmail: string;
-}
 
 interface Role {
   role: "agent" | "customer";
@@ -274,7 +269,7 @@ class BookingService {
       }
     }
 
-    static async createAgentBooking(BookingDetails: Partial<IBooking>, customerData:customerData): Promise<{booking: IBooking, orderId: string }> {
+    static async createAgentBooking(BookingDetails: Partial<IBooking>,role:string): Promise<{booking: IBooking, orderId: string,totalAmount: number,packageAmount: number, addonCost: number, gstAmount: number,yourComission:number}> {
       try {
         const { 
           startDate, 
@@ -285,6 +280,9 @@ class BookingService {
           addonServices, 
           user, 
           yacht,
+          customerEmail,
+          customerName,
+          customerPhone
         } = BookingDetails;
 
     // 1. Find yacht
@@ -335,14 +333,17 @@ class BookingService {
     const totalTaxPercentage = 18;
     const gstAmount = this.calculateGst(totalAmount, totalTaxPercentage);
     totalAmount += gstAmount;
-    console.log("Total Amount after gst is here : ", totalAmount);
+    console.log("Total Amount after gst and before Agent comission is here : ", totalAmount);
     
     // 7. Apply agent discount logic
     const agent = await Agent.findById(user);
     if (!agent) throw new Error("Agent not found");
     const agentDiscount = agent.commissionRate ?? 0;
-    const discountedAmount = totalAmount - (totalAmount * agentDiscount / 100);
-
+    const yourComission = totalAmount * agentDiscount / 100;
+    const discountedAmount = totalAmount - (yourComission);
+    console.log("Discounted comission of Agents : ", discountedAmount);
+    console.log("Total Amount after Agent Discount is : ", discountedAmount);
+    totalAmount = discountedAmount;
 
 
    
@@ -363,10 +364,11 @@ class BookingService {
       name: yachtDetails.name,
       images: yachtDetails.images,
       isAgentBooking: true,
-      totalAmount: discountedAmount,
-      customerName: customerData.customerName,
-      customerEmail: customerData.customerEmail,
-      customerPhone: customerData.customerPhone,
+      agent: user,
+      totalAmount: totalAmount,
+      customerName: customerName,
+      customerEmail: customerEmail,
+      customerPhone: customerPhone,
       addonServices: addonServices || [],
       paymentStatus: 'pending',
       status: 'confirmed',
@@ -383,12 +385,30 @@ class BookingService {
     const order = await razorpay.orders.create(options);
     booking.razorpayOrderId = order.id;
     await booking.save();
-
-    await Agent.findByIdAndUpdate(user, { $push: { bookings: booking._id } });
+    const Agentdetail = await Agent.findById(user);
+    const superAgent = Agentdetail?.superAgent;
+    console.log("SuperAgent is here : ", superAgent);
+    
+    const agentUpdate = Agent.findByIdAndUpdate(user, { $push: { bookings: booking._id } });
+    
+    if (superAgent) {
+      const superAgentUpdate = SuperAgent.findByIdAndUpdate(superAgent, { $push: { bookings: booking._id } });
+      await Promise.all([agentUpdate, superAgentUpdate]);
+    } else {
+      await agentUpdate;
+    }
     const owner = yachtDetails.owner;
     await Owner.findByIdAndUpdate(owner, { $push: { bookings: booking._id } });
         
-    return { booking, orderId: order.id };
+    return { 
+      booking,
+      orderId: order.id,
+      totalAmount,
+      packageAmount,
+      addonCost,
+      gstAmount,
+      yourComission
+     };
     } catch (error) {
       throw new Error((error as Error).message);
     }

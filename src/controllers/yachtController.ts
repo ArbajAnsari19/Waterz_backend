@@ -27,9 +27,7 @@ export class YatchController {
 
   static async topYatch(req: Request, res: Response): Promise<void> {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 4;
-      const yachts = await YatchService.topYatch(page, limit);
+      const yachts = await YatchService.topYatch();
       res.status(200).json(yachts);
     } catch (error) {
       res.status(500).json({ message: (error as Error).message });
@@ -40,6 +38,17 @@ export class YatchController {
     try {
       const owner = req.currentUser.id;
       const earnings = await YatchService.revenue(owner);
+      res.status(200).json(earnings);
+    } catch (error) {
+      res.status(500).json({ message: (error as Error).message });
+    }
+  }
+
+  static async revenueAgent(req: Request, res: Response): Promise<void> {
+    try {
+      const agent = req.currentUser.id;
+      const earnings = await YatchService.revenueAgent(agent);
+      console.log("Earnings", earnings);
       res.status(200).json(earnings);
     } catch (error) {
       res.status(500).json({ message: (error as Error).message });

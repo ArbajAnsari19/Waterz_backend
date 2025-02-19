@@ -50,7 +50,6 @@ export class BookingController {
     }
 
     static async createAgentBooking(req: Request, res: Response): Promise<void> {
-        console.log("bodyyy", req.body)
         try {
             const BookingDetails = {
                 startDate: req.body.startDate,
@@ -61,14 +60,14 @@ export class BookingController {
                 yacht: req.params.id,
                 packages: req.body.packages,
                 addonServices:req.body.addonServices,
-            }
-            const customerData = {
                 customerName: req.body.customerName,
                 customerPhone: req.body.customerPhone,
                 customerEmail: req.body.customerEmail
             }
-            const { booking, orderId } = await BookingService.createAgentBooking(BookingDetails,customerData);
-            res.status(201).json({ message: 'Booking created successfully. Please complete the payment.', booking, orderId });
+            const role = req.currentUser.role;
+
+            const { booking, orderId,totalAmount,packageAmount,addonCost, gstAmount,yourComission } = await BookingService.createAgentBooking(BookingDetails,role);
+            res.status(201).json({ message: 'Booking created successfully. Please complete the payment.', booking, orderId,totalAmount,packageAmount,addonCost, gstAmount,yourComission });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }

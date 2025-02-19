@@ -137,11 +137,10 @@ class UserprofileService{
       // Modified query with full debug logging
       const bookings = await Booking.find({ 
         yacht: { $in: yachtIds },
-        status: 'confirmed',  // First check the booking is confirmed
+        paymentStatus : "completed", 
         $or: [
           { rideStatus: 'pending' },
           { rideStatus: { $exists: false } },
-          { paymentStatus : "completed"}  // Also check for bookings without rideStatus
         ]
       }).populate({
         path: 'yacht',
@@ -1189,7 +1188,7 @@ class AdminService {
 
   static async getAllAgents(): Promise<IUser[]> {
     try {
-      return await User.find();
+      return await Agent.find();
     } catch (error) {
       throw new Error("Error listing agents: " + (error as Error).message);
     }
@@ -1365,6 +1364,8 @@ class AdminService {
         default:
           throw new Error(`Invalid status filter: ${status}`);
       }
+
+      query.paymentStatus = "completed";
   
         // Then apply search query if provided
         if (searchName && searchName.trim()) {
@@ -1612,34 +1613,43 @@ class AdminService {
      
       // Get today's bookings
         const todayBookings = await Booking.countDocuments({
-          createdAt: { $gte: startOfToday }
+          createdAt: { $gte: startOfToday },
+          paymentStatus: 'completed'
         });
         const lastTodayBookings = await Booking.countDocuments({
-          createdAt: { $gte: startofLastToday, $lt: startOfToday }
+          createdAt: { $gte: startofLastToday, $lt: startOfToday },
+          paymentStatus: 'completed'
         });
 
       // Get weekly bookings
       const thisWeekBookings = await Booking.countDocuments({
-        createdAt: { $gte: startOfWeek }
+        createdAt: { $gte: startOfWeek },
+        paymentStatus: 'completed'
+
       });
       const lastWeekBookings = await Booking.countDocuments({
-        createdAt: { $gte: startOfLastWeek, $lt: startOfWeek }
+        createdAt: { $gte: startOfLastWeek, $lt: startOfWeek },
+        paymentStatus: 'completed'
       });
   
       // Get monthly bookings
       const thisMonthBookings = await Booking.countDocuments({
-        createdAt: { $gte: startOfMonth }
+        createdAt: { $gte: startOfMonth },
+        paymentStatus: 'completed'
       });
       const lastMonthBookings = await Booking.countDocuments({
-        createdAt: { $gte: startOfLastMonth, $lt: startOfMonth }
+        createdAt: { $gte: startOfLastMonth, $lt: startOfMonth },
+        paymentStatus: 'completed'
       });
   
       // Get yearly bookings
       const thisYearBookings = await Booking.countDocuments({
-        createdAt: { $gte: startOfYear }
+        createdAt: { $gte: startOfYear },
+        paymentStatus: 'completed'
       });
       const lastYearBookings = await Booking.countDocuments({
-        createdAt: { $gte: startOfLastYear, $lt: startOfYear }
+        createdAt: { $gte: startOfLastYear, $lt: startOfYear },
+        paymentStatus: 'completed'
       });
   
       // Calculate percentage changes
@@ -1701,7 +1711,7 @@ class AdminService {
       const bookingRange = getDateRange(filters.bookingdistributionView);
       const earningRange = getDateRange(filters.earningdistributionView);
   
-      // Calculate booking data
+      // Calculate booking data with paymentStatus filter added
       const bookingData = await Promise.all(
         (filters.bookingView === 'thisYear' ? months : years.flatMap(year => 
           months.map(month => ({ month, year: year.toString() }))
@@ -1719,17 +1729,17 @@ class AdminService {
           const [totalBookings, customerBookings, agentBookings] = await Promise.all([
             Booking.countDocuments({
               createdAt: { $gte: startDate, $lte: endDate },
-              status: 'confirmed'
+              paymentStatus: 'completed'
             }),
             Booking.countDocuments({
               createdAt: { $gte: startDate, $lte: endDate },
               bookingType: 'customer',
-              status: 'confirmed'
+              paymentStatus: 'completed'
             }),
             Booking.countDocuments({
               createdAt: { $gte: startDate, $lte: endDate },
               bookingType: 'agent',
-              status: 'confirmed'
+              paymentStatus: 'completed'
             })
           ]);
   
@@ -1782,7 +1792,7 @@ class AdminService {
         })
       );
   
-      // Calculate distributions
+      // Calculate distributions with paymentStatus filter added
       const [bookingDist, earningDist] = await Promise.all([
         Booking.aggregate([
           {
@@ -1791,7 +1801,8 @@ class AdminService {
                 $gte: bookingRange.start, 
                 $lte: bookingRange.end 
               },
-              status: 'confirmed'
+              status: 'confirmed',
+              paymentStatus: 'completed'
             }
           },
           {
