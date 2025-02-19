@@ -84,7 +84,8 @@ export class BookingController {
             const {totalAmount,razorpayId} = await BookingService.getBookingTotalandRazorPayId(bookingId);
             console.log("grandTotal", totalAmount) 
             const userId = req.currentUser.id;
-            const { discount,discountType,newTotal,orderId } = await BookingService.validatePromocode(promoCode,userId,totalAmount,bookingId,razorpayId);
+            const role = req.currentUser.role;
+            const { discount,discountType,newTotal,orderId } = await BookingService.validatePromocode(promoCode,userId,totalAmount,bookingId,role);
             res.status(200).json({ discount,discountType,newTotal,orderId });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });

@@ -16,6 +16,7 @@ router.post("/updateProfile",authenticateToken,authenticateAgent, userController
 router.get("/yatch-detail/:id",authenticateToken,authenticateAgent, YatchController.detailYatch); 
 router.post("/search-Yatch",authenticateToken,authenticateAgent, BookingController.serchIdealYatchs); 
 router.post("/create-booking/:id",authenticateToken,authenticateAgent, BookingController.createAgentBooking); 
+router.post("/validatePromoCode",authenticateToken,authenticateAgent, BookingController.validatePromocode);
 // router.post("/create-booking/multiple",authenticateToken,authenticateAgent, BookingController.createAgentBookingWithMultipleYatchs);
 
 
