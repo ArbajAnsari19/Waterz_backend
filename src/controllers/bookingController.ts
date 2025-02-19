@@ -50,6 +50,7 @@ export class BookingController {
     }
 
     static async createAgentBooking(req: Request, res: Response): Promise<void> {
+        console.log("bodyyy", req.body)
         try {
             const BookingDetails = {
                 startDate: req.body.startDate,
@@ -57,7 +58,9 @@ export class BookingController {
                 location: req.body.location,
                 PeopleNo: req.body.PeopleNo,
                 user: req.currentUser.id,
-                yacht: req.params.id
+                yacht: req.params.id,
+                packages: req.body.packages,
+                addonServices:req.body.addonServices,
             }
             const customerData = {
                 customerName: req.body.customerName,
