@@ -134,10 +134,10 @@ export class userController {
         }
     }
     // agent 
-    static meAgent = async (req: Request, res: Response): Promise<void> => {
+    static async meAgent(req: Request, res: Response): Promise<void> {
         try {
             const user = await UserprofileService.meAgent(req.currentUser.id);
-            res.status(200).json({ message: 'meAgent' });
+            res.status(200).json({ user });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }
@@ -421,6 +421,7 @@ export class adminController{
     static async createPromoCode(req: Request, res: Response): Promise<void> {
         try {
           const promoData = req.body;
+          console.log("promoData",promoData);
           const promoCode = await AdminService.generatePromoCode(promoData);
           res.status(201).json({ 
             message: "Promo code created successfully", 

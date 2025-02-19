@@ -429,7 +429,7 @@ class PaymentService {
   static async validateAndApplyPromo(
     promoCode: string,
     userId: string,
-    userType: "agent" | "customer",
+    userType: "agent" | "customer"| "all",
     bookingAmount: number
   ): Promise<{
     discountType: "PERCENTAGE" | "FIXED" | "FAILED";

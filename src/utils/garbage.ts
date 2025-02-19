@@ -147,3 +147,13 @@
     //     throw new Error((error as Error).message);
     //   }
     // }
+
+
+
+    // private static getPackageDuration(packageType: string): { sailingHours: number, anchorageHours: number, totalHours: number } {
+    //     // Extract all numbers from the package string using regex.
+    //     const numbers = packageType.match(/(\d+(\.\d+)?)/g);
+    //     const sailing = numbers && numbers[0] ? parseFloat(numbers[0]) : 0;
+    //     const anchorage = numbers && numbers[1] ? parseFloat(numbers[1]) : 0;
+    //     return { sailingHours: sailing, anchorageHours: anchorage, totalHours: sailing + anchorage };
+    //   }

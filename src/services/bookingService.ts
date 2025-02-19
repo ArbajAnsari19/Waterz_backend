@@ -4,9 +4,7 @@ import Booking from "../models/Booking";
 import Owner, { SuperAgent } from "../models/User";
 import User,{ Agent } from "../models/User";
 import Razorpay from "razorpay";
-import { PackageType } from "../utils/trip";
 import PaymentService from "./paymentService";
-import Payment from "../models/Payment";
 import { getEffectivePrice } from "../utils/timeUtils";
 
 
@@ -19,14 +17,6 @@ const razorpay = new Razorpay({
 });
 
 class BookingService {
-
-    private static getPackageDuration(packageType: string): { sailingHours: number, anchorageHours: number, totalHours: number } {
-      // Extract all numbers from the package string using regex.
-      const numbers = packageType.match(/(\d+(\.\d+)?)/g);
-      const sailing = numbers && numbers[0] ? parseFloat(numbers[0]) : 0;
-      const anchorage = numbers && numbers[1] ? parseFloat(numbers[1]) : 0;
-      return { sailingHours: sailing, anchorageHours: anchorage, totalHours: sailing + anchorage };
-    }
 
     private static getPackageDurationHelper(pkgType: string): { sailingHours: number, anchorageHours: number, totalHours: number } {
       const [sailing, anchoring] = pkgType.split('_hour').map(part => {
@@ -44,6 +34,7 @@ class BookingService {
       if (!addonServices || addonServices.length === 0) return 0;
       const calculatedAddonPrice = addonServices.reduce((sum, addon) => {
         let serviceName: string;
+        console.log(" Total Booking Hours is : ", totalHours);
         // Use totalHours as duration regardless of addon type
         if (typeof addon === 'string') {
           serviceName = addon;
@@ -51,7 +42,7 @@ class BookingService {
           serviceName = addon.service;
         }
         const yachtAddon = yachtDetails.addonServices.find(a => a.service === serviceName);
-        return sum + (yachtAddon ? yachtAddon.pricePerHour * totalHours : 0);
+        return sum + (yachtAddon ? yachtAddon.pricePerHour * 1 : 0);
       }, 0);
       console.log("AddonPrice is here : ", calculatedAddonPrice);
       return calculatedAddonPrice;
@@ -164,11 +155,12 @@ class BookingService {
         customerEmail: userDetails.email,
         customerPhone: userDetails.phone,
         PeopleNo,
+        isAgentBooking: false,
         totalAmount,
         addonServices: addonServices || [],
         paymentStatus: 'pending',
         status: 'confirmed',
-        calendarSync: false
+        calendarSync: true
       });
 
         const options = {
@@ -372,7 +364,7 @@ class BookingService {
       addonServices: addonServices || [],
       paymentStatus: 'pending',
       status: 'confirmed',
-      calendarSync: false
+      calendarSync: true
     });
 
 
