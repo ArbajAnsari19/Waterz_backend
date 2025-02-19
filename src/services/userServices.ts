@@ -85,7 +85,7 @@ class UserprofileService{
 
   static async customerCurrentRides(userId: string): Promise<IBooking[] | null> {
     try {
-      const bookings = await Booking.find({ user: userId, rideStatus: 'pending' });
+      const bookings = await Booking.find({ user: userId, rideStatus: 'pending',paymentStatus: 'completed' });
       return bookings;
     } catch (error) {
       throw new Error("Error getting previous rides: " + (error as Error).message);
@@ -140,7 +140,8 @@ class UserprofileService{
         status: 'confirmed',  // First check the booking is confirmed
         $or: [
           { rideStatus: 'pending' },
-          { rideStatus: { $exists: false } }  // Also check for bookings without rideStatus
+          { rideStatus: { $exists: false } },
+          { paymentStatus : "completed"}  // Also check for bookings without rideStatus
         ]
       }).populate({
         path: 'yacht',
@@ -230,7 +231,7 @@ class UserprofileService{
 
   static async agentCurrentRides(userId: string): Promise<IBooking[] | null> {
     try {
-      const bookings = await Booking.find({ user: userId, rideStatus: 'pending' });
+      const bookings = await Booking.find({ user: userId, rideStatus: 'pending',paymentStatus: 'completed' });
       return bookings;
     } catch (error) {
       throw new Error("Error getting current rides: " + (error as Error).message);
