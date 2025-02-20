@@ -400,95 +400,53 @@ class UserprofileService{
     }
   }
 
-  static async listFilteredEarnings(userId: string, filter: Partial<EarningFilter>): Promise<any> {
+  static async listFilteredEarnings(userId: string, filter: Partial<{ agentWise: string }>): Promise<number> {
     try {
-      // 1. Get date range based on timeframe
-      const getDateRange = (timeframe: string) => {
-        const now = new Date();
-        switch (timeframe) {
-          case 'today':
-            return {
-              start: new Date(now.setHours(0, 0, 0, 0)),
-              end: new Date(now.setHours(23, 59, 59, 999))
-            };
-          case 'last_week':
-            const lastWeek = new Date(now.setDate(now.getDate() - 7));
-            return {
-              start: lastWeek,
-              end: now
-            };
-          case 'last_month':
-            const lastMonth = new Date(now.setMonth(now.getMonth() - 1));
-            return {
-              start: lastMonth,
-              end: now
-            };
-          default:
-            return {
-              start: new Date(0),
-              end: now
-            };
-        }
-      };
-  
-      // 2. Build query
-      const { start, end } = getDateRange(filter.timeframe);
-      const query: any = {
-        createdAt: { $gte: start, $lte: end },
-        paymentStatus: 'completed'
-      };
-  
-      // 3. Get agents under superAgent
+      // 1. Get all agents under this superAgent
       const agents = await Agent.find({ superAgent: userId });
       if (!agents.length) {
         console.log("No agents found for superAgent:", userId);
-        return [];
+        return 0;
       }
-  
-      // 4. Filter by specific agent if provided (use "agent" field, not "user")
-      if (filter.agentWise !== 'All') {
-        const agentExists = agents.some(agent =>
-          agent._id.toString() === filter.agentWise
+    
+      // 2. Build base query to get completed bookings
+      let query: any = {};
+      // Treat empty string or 'All' as all agents
+      if (filter.agentWise && filter.agentWise.trim() !== "" && filter.agentWise !== 'All') {
+        const agentExists = agents.some(
+          agent => agent._id.toString() === filter.agentWise!.toString()
         );
+    
         if (!agentExists) {
-          throw new Error('Invalid agent selection');
+          console.error("Invalid agent selection. Agent ID in filter:", filter.agentWise);
+          throw new Error('Selected agent does not belong to this superAgent');
         }
         query.agent = filter.agentWise;
+        console.log("Query filtering on single agent:", query.agent);
       } else {
         query.agent = { $in: agents.map(agent => agent._id) };
+        console.log("Query filtering on all agents:", query.agent);
       }
-      console.log("Final earnings query:", JSON.stringify(query));
-  
-      // 5. Get bookings and calculate earnings
-      const bookings = await Booking.find(query).sort({ createdAt: -1 });
+      query.paymentStatus = "completed";
+    
+      // 3. Get bookings
+      const bookings = await Booking.find(query);
       console.log("Bookings for earnings:", bookings);
-  
-      // 6. Calculate earnings based on commission rate from matching agent
-      const earnings = bookings.map(booking => {
-        // Compare with booking.agent (the field used in listFilteredAgent)
+    
+      // 4. Calculate total earnings as sum of commission (booking.totalAmount * commissionRate/100)
+      const totalEarnings = bookings.reduce((total, booking) => {
         const agent = agents.find(a => a._id.toString() === booking.agent?.toString());
         const commissionRate = agent?.commissionRate || 0;
         const earningAmount = (booking.totalAmount * commissionRate) / 100;
-  
-        return {
-          bookingId: booking._id,
-          date: booking.createdAt,
-          yachtName: booking.yacht,
-          totalAmount: booking.totalAmount,
-          commissionRate,
-          earningAmount,
-          agentName: agent?.name,
-          customerName: booking.customerName,
-          status: booking.status
-        };
-      });
-  
-      return earnings;
-  
-    } 
-    catch (error) {
+        return total + earningAmount;
+      }, 0);
+    
+      console.log("Total Earnings:", totalEarnings);
+      return totalEarnings;
+    
+    } catch (error) {
       console.error("Error in listFilteredEarnings:", error);
-    throw error;
+      throw error;
     }
   }
 
@@ -611,7 +569,7 @@ class UserService {
   } catch (error) {
     throw new Error((error as Error).message);
   }
-}
+  }
 
   static async createSuperAgent(userData:ISuperAgent): Promise<IUserAuthInfo> {
     try {
