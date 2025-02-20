@@ -258,8 +258,7 @@ export class userController {
     static async listFilteredEarnings(req: Request, res: Response): Promise<void> {
         try {
             const userId = req.currentUser.id;
-            const filter : EarningFilter = {
-                timeframe:req.body.timeframe,
+            const filter : Partial<EarningFilter> = {
                 agentWise:req.body.agentWise,
             } 
             const allAgents = await UserprofileService.listFilteredEarnings(userId,filter);

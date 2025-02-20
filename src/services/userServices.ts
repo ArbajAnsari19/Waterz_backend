@@ -64,7 +64,7 @@ interface DashboardResponse {
 
 
 export interface Filter {
-  status: "pending" | "completed"
+  status: "pending" | "completed" | "All" |string;
   agentWise: "All" | string
 }
 interface AgentWithBookings {
@@ -343,14 +343,15 @@ class UserprofileService{
 
   static async listFilteredAgent(userId: string, filter: Filter): Promise<IBooking[]> {
     try {
-  
       // Set default values if not provided
       const filterWithDefaults = {
-        status: filter.status || "completed",
+        status: filter.status || "All",
         agentWise: filter.agentWise || "All",
-      };  
+      };
+      console.log("Filter with defaults:", filterWithDefaults);
+  
       // 1. Get all agents under this superAgent
-      const agents = await Agent.find({ superAgent: userId });  
+      const agents = await Agent.find({ superAgent: userId });
       if (agents.length === 0) {
         console.log("No agents found for superAgent:", userId);
         return [];
@@ -358,43 +359,48 @@ class UserprofileService{
   
       // 2. Build base query
       let query: any = {};
-    
+  
       // 3. Apply agent filter with fixed comparison
       if (filterWithDefaults.agentWise === "All") {
         query.agent = { $in: agents.map(agent => agent._id) };
         console.log("Query filtering on all agents:", query.agent);
       } else {
-        const agentExists = agents.some(agent => 
+        const agentExists = agents.some(agent =>
           agent._id.toString() === filterWithDefaults.agentWise.toString()
         );
-        
+  
         if (!agentExists) {
           console.error("Selected agent does not belong to this superAgent. Agent ID in filter:", filterWithDefaults.agentWise);
           throw new Error('Selected agent does not belong to this superAgent');
         }
         query.agent = filterWithDefaults.agentWise;
       }
-    
+  
       // 4. Apply status and payment status filters
-      query.rideStatus = filterWithDefaults.status;
+      if (filterWithDefaults.status === "All" || filterWithDefaults.status.trim() === "") {
+        query.rideStatus = { $in: ["pending", "completed"] };
+      } else {
+        query.rideStatus = filterWithDefaults.status;
+      }
       query.paymentStatus = "completed";
-    
+  
       // Debug: Log final query
-      const AgentBooking = await Booking.find({ agentId: userId });
+      console.log("Final query object:", JSON.stringify(query));
+  
       const bookings = await Booking.find(query)
         .sort({ createdAt: -1 })
         .populate('agent');
-        
+  
       console.log("Bookings retrieved:", bookings);
       return bookings;
-    
+  
     } catch (error) {
       console.error("Error in listFilteredAgent:", error);
       throw error;
     }
   }
 
-  static async listFilteredEarnings(userId: string, filter: EarningFilter): Promise<any> {
+  static async listFilteredEarnings(userId: string, filter: Partial<EarningFilter>): Promise<any> {
     try {
       // 1. Get date range based on timeframe
       const getDateRange = (timeframe: string) => {
@@ -434,28 +440,33 @@ class UserprofileService{
   
       // 3. Get agents under superAgent
       const agents = await Agent.find({ superAgent: userId });
-      if (!agents.length) return [];
+      if (!agents.length) {
+        console.log("No agents found for superAgent:", userId);
+        return [];
+      }
   
-      // 4. Filter by specific agent if provided
+      // 4. Filter by specific agent if provided (use "agent" field, not "user")
       if (filter.agentWise !== 'All') {
-        const agentExists = agents.some(agent => 
+        const agentExists = agents.some(agent =>
           agent._id.toString() === filter.agentWise
         );
         if (!agentExists) {
           throw new Error('Invalid agent selection');
         }
-        query.user = filter.agentWise;
+        query.agent = filter.agentWise;
       } else {
-        query.user = { $in: agents.map(agent => agent._id) };
+        query.agent = { $in: agents.map(agent => agent._id) };
       }
+      console.log("Final earnings query:", JSON.stringify(query));
   
       // 5. Get bookings and calculate earnings
-      const bookings = await Booking.find(query)
-        .sort({ createdAt: -1 });
+      const bookings = await Booking.find(query).sort({ createdAt: -1 });
+      console.log("Bookings for earnings:", bookings);
   
-      // 6. Calculate earnings
+      // 6. Calculate earnings based on commission rate from matching agent
       const earnings = bookings.map(booking => {
-        const agent = agents.find(a => a._id.toString() === booking.user?.toString());
+        // Compare with booking.agent (the field used in listFilteredAgent)
+        const agent = agents.find(a => a._id.toString() === booking.agent?.toString());
         const commissionRate = agent?.commissionRate || 0;
         const earningAmount = (booking.totalAmount * commissionRate) / 100;
   
@@ -474,9 +485,10 @@ class UserprofileService{
   
       return earnings;
   
-    } catch (error) {
+    } 
+    catch (error) {
       console.error("Error in listFilteredEarnings:", error);
-      throw error;
+    throw error;
     }
   }
 
