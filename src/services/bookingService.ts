@@ -335,7 +335,6 @@ class BookingService {
     const discountedAmount = totalAmount - (yourComission);
     console.log("Discounted comission of Agents : ", discountedAmount);
     console.log("Total Amount after Agent Discount is : ", discountedAmount);
-    totalAmount = discountedAmount;
 
 
    
