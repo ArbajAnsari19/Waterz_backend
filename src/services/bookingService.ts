@@ -378,13 +378,14 @@ class BookingService {
     booking.razorpayOrderId = order.id;
     await booking.save();
     const Agentdetail = await Agent.findById(user);
+    console.log("Agent Details is here : ", Agentdetail);
     const superAgent = Agentdetail?.superAgent;
     console.log("SuperAgent is here : ", superAgent);
     
     const agentUpdate = Agent.findByIdAndUpdate(user, { $push: { bookings: booking._id } });
-    
     if (superAgent) {
       const superAgentUpdate = SuperAgent.findByIdAndUpdate(superAgent, { $push: { bookings: booking._id } });
+      console.log("SuperAgent related data is pusher to superAgent ");
       await Promise.all([agentUpdate, superAgentUpdate]);
     } else {
       await agentUpdate;

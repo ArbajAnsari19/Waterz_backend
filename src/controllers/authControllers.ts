@@ -33,6 +33,7 @@ export class AuthController {
   static async signUpAgent(req: Request, res: Response): Promise<void> {
     try {
       const referralCode = req.params.referralCode;
+      console.log("referralCode is here :", referralCode)
       const { token } = await UserService.createAgent(req.body,referralCode);
       res.status(201).json({
         message: "Signup successful! Please verify your email with the OTP sent.",

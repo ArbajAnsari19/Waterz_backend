@@ -343,59 +343,56 @@ class UserprofileService{
 
   static async listFilteredAgent(userId: string, filter: Filter): Promise<IBooking[]> {
     try {
-      // Debug logging
-      console.log('SuperAgent ID:', userId);
-      console.log('Filter:', filter);
-
+  
       // Set default values if not provided
       const filterWithDefaults = {
         status: filter.status || "completed",
-        agentWise: filter.agentWise || "All"
-      };
+        agentWise: filter.agentWise || "All",
+      };  
       // 1. Get all agents under this superAgent
-      const agents = await Agent.find({ superAgent: userId });
-      
+      const agents = await Agent.find({ superAgent: userId });  
       if (agents.length === 0) {
-        console.log('No agents found for superAgent:', userId);
+        console.log("No agents found for superAgent:", userId);
         return [];
       }
-
+  
       // 2. Build base query
       let query: any = {};
-
+    
       // 3. Apply agent filter with fixed comparison
       if (filterWithDefaults.agentWise === "All") {
-        query.agentId = { $in: agents.map(agent => agent._id) };
+        query.agent = { $in: agents.map(agent => agent._id) };
+        console.log("Query filtering on all agents:", query.agent);
       } else {
         const agentExists = agents.some(agent => 
           agent._id.toString() === filterWithDefaults.agentWise.toString()
         );
         
-        console.log('Agent exists check:', agentExists);
         if (!agentExists) {
+          console.error("Selected agent does not belong to this superAgent. Agent ID in filter:", filterWithDefaults.agentWise);
           throw new Error('Selected agent does not belong to this superAgent');
         }
-        query.agentId = filterWithDefaults.agentWise;
+        query.agent = filterWithDefaults.agentWise;
       }
-
-      // 4. Apply status filter
+    
+      // 4. Apply status and payment status filters
       query.rideStatus = filterWithDefaults.status;
-
-
+      query.paymentStatus = "completed";
+    
       // Debug: Log final query
-      console.log('Final query:', JSON.stringify(query));
-
+      const AgentBooking = await Booking.find({ agentId: userId });
       const bookings = await Booking.find(query)
         .sort({ createdAt: -1 })
-        .populate('agentId');
-
+        .populate('agent');
+        
+      console.log("Bookings retrieved:", bookings);
       return bookings;
-
+    
     } catch (error) {
       console.error("Error in listFilteredAgent:", error);
       throw error;
     }
-  } 
+  }
 
   static async listFilteredEarnings(userId: string, filter: EarningFilter): Promise<any> {
     try {
@@ -555,6 +552,7 @@ class UserService {
       throw new Error("Agent already exists");
     }
     let superAgentId = null;
+    console.log("Referral code is here : ", referralCode);
     if (referralCode) {
       // Find and validate superAgent
       const superagent = await SuperAgent.findOne({ referralCode: referralCode });
@@ -562,8 +560,9 @@ class UserService {
         throw new Error("Invalid referral code");
       }
       superAgentId = superagent._id;
+      console.log("Super agent name is here : ", superagent.name);
+      console.log("Super agent id is here : ", superAgentId);
     }
-    console.log("Super agent id is here : ", superAgentId);
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(userData.password, salt);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -581,7 +580,7 @@ class UserService {
       ...(superAgentId && { superAgent: superAgentId })
     });
     // Save agent
-    console.log("Agent is here : ", agent);
+    console.log("Agent superAgent id is here : ", agent.superAgent);
     const savedAgent = await agent.save();
 
     // Update superAgent's agents array if exists
