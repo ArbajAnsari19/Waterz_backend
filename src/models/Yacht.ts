@@ -44,7 +44,8 @@ export const yachtSchema = new mongoose.Schema<IYacht>({
   isVerifiedByAdmin: { 
     type: String, 
     enum: ["accepted", "requested", "denied"], 
-    required: true 
+    required: true, 
+    default: "requested"
   },
   location: { 
     type: String, 

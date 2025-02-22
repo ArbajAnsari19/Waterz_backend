@@ -44,7 +44,7 @@ router.get("/getAllPromoCodes", authenticateToken, authenticateAdmin, adminContr
 router.post("/deactivate-promo-code/:id", authenticateToken, authenticateAdmin, adminController.deactivatePromoCode);
 router.get("/getYatchDetail/:id", authenticateToken, authenticateAdmin, adminController.getYatchDetail);
 
-// router.post("/createAdminYacht", authenticateToken, authenticateAdmin, adminController.createAdminYacht);
+router.post("/createAdminYacht", authenticateToken, authenticateAdmin, adminController.admincreateYatch);
 
 
 export default router;

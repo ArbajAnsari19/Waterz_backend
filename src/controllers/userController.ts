@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { UserprofileService, AdminService, Filter } from '../services/userServices';
 import { TimeFrame,LocationType,AddonService,PackageType } from '../utils/trip';
 import UserService from '../services/userServices';
+import YatchService from '../services/yatchServices';
 
 export interface EarningFilter {
     timeframe: TimeFrame;
@@ -186,7 +187,7 @@ export class userController {
     static async meSuperAgent(req: Request, res: Response): Promise<void> {
         try {
             const user = await UserprofileService.meSuperAgent(req.currentUser.id);
-            res.status(200).json({ message: 'meSuperAgent' });
+            res.status(200).json({ user });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }
@@ -782,6 +783,95 @@ export class adminController{
             res.status(200).json({ dashboard });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async admincreateYatch(req: Request, res: Response): Promise<void> {
+        try {
+            const {
+                name,
+                images,
+                description,
+                capacity,
+                mnfyear,
+                dimension,
+                location,
+                pickupat,
+                YachtType,
+                crewCount,
+                amenities,
+                availability,
+                price,
+                ownerId,
+                packageTypes,
+                addonServices
+              } = req.body;
+    
+    
+              // Validate required fields
+              if (!name || !images || !location || !location || !YachtType) {
+                throw new Error('Missing required fields');
+              }
+    
+              // Validate location is valid enum value
+              if (!Object.values(LocationType).includes(location)) {
+                throw new Error('Invalid location');
+              }
+    
+              // Validate price structure
+              if (!price?.sailing?.peakTime || !price?.sailing?.nonPeakTime || 
+                  !price?.anchoring?.peakTime || !price?.anchoring?.nonPeakTime) {
+                throw new Error('Invalid price structure');
+              }
+    
+              // Validate addon services
+            if (addonServices) {
+                addonServices.forEach((addon: { service: string; pricePerHour: number }) => {
+                    if (!addon.service || typeof addon.pricePerHour !== 'number') {
+                        throw new Error('Invalid addon service structure: missing service or price');
+                    }
+                    
+                    const validService = Object.values(AddonService).includes(addon.service as AddonService);
+                    if (!validService) {
+                        throw new Error(`Invalid addon service: ${addon.service}. Must be one of: ${Object.values(AddonService).join(', ')}`);
+                    }
+                });
+            }
+              
+            // Validate packageTypes array
+            if (packageTypes && Array.isArray(packageTypes)) {
+              const invalidPackage = packageTypes.some(
+                  pkg => !Object.values(PackageType).includes(pkg)
+              );
+              if (invalidPackage) {
+                  throw new Error('Invalid package type in list');
+              }
+          }
+              const yachtDetails = {
+                owner:ownerId,
+                name,
+                images,
+                description,
+                capacity,
+                mnfyear,
+                YachtType,
+                dimension,
+                location,
+                pickupat,
+                crewCount,
+                amenities,
+                availability,
+                price,
+                addonServices: addonServices || [],
+                packageTypes,
+                isVerifiedByAdmin: 'accepted',
+              };
+          
+              const { yachtId } = await YatchService.createYatch(yachtDetails);
+              await UserService.addYachtToOwner(ownerId, yachtId);
+            res.status(201).json({ message: 'Yatch created successfully', yachtId });
+        } catch (error) {
+          res.status(500).json({ message: (error as Error).message });
         }
     }
 }
