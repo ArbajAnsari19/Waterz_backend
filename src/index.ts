@@ -15,7 +15,11 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://www.wavezgoa.com',
-  'https://www.wavezgoa.com'
+  'https://www.wavezgoa.com',
+  'https://www.agent.wavezgoa.com',
+  'https://www.admin.wavezgoa.com',
+  'https://www.superagent.wavezgoa.com',
+  'https://www.owner.wavezgoa.com'
 ];
 const corsOptions = {
   origin: allowedOrigins,
