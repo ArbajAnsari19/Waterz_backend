@@ -271,8 +271,8 @@ class UserprofileService{
       }
   
       // Generate full referral URL
-      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      const referralUrl = `${baseUrl}/register?ref=${superAgent.referralCode}`;
+      const baseUrl = process.env.FRONTEND_URL || 'https://agent.wavezzgoa.com';
+      const referralUrl = `${baseUrl}/signup?${superAgent.referralCode}`;
   
       return referralUrl;
   

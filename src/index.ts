@@ -14,15 +14,8 @@ app.use(bodyParser.json());
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
-  'http://localhost:5175',
-  'http://localhost:5176',
-  'http://localhost:5177',
-  'http://localhost:5178',
-  'http://wavezgoa.com',
-  'http://localhost:5173',
-  'https://wavezgoa.com',
   'http://www.wavezgoa.com',
-  'https://www.wavezgoa.com',
+  'https://www.wavezgoa.com'
 ];
 const corsOptions = {
   origin: allowedOrigins,
@@ -70,4 +63,3 @@ app.listen(PORT, () => {
 });
 
 // Optimisation can be happend by populating bookings by Agent instead of Searching for all Booking and then finiding booking for Agent with superAgent.
- 

@@ -1,7 +1,7 @@
 import express from "express";
 import authenticateToken, { authenticateAdmin } from "../middleware/authMiddleware";
 import { adminController } from "../controllers/userController";
-
+import { YatchController } from "../controllers/yachtController";
 
 const router = express.Router();
 
@@ -43,7 +43,7 @@ router.post("/generate-promo-code", authenticateToken, authenticateAdmin, adminC
 router.get("/getAllPromoCodes", authenticateToken, authenticateAdmin, adminController.getAllPromoCodes);
 router.post("/deactivate-promo-code/:id", authenticateToken, authenticateAdmin, adminController.deactivatePromoCode);
 router.get("/getYatchDetail/:id", authenticateToken, authenticateAdmin, adminController.getYatchDetail);
-
+router.get("/topYatch",YatchController.topYatch)
 router.post("/createAdminYacht", authenticateToken, authenticateAdmin, adminController.admincreateYatch);
 
 
