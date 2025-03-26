@@ -5,6 +5,7 @@ import { profile } from 'console';
 
 
 export interface IUser {
+  googleId: string,
   name: string;
   email: string;
   password: string;
@@ -59,6 +60,7 @@ export interface IAdmin {
 
 
 const userSchema = new mongoose.Schema({
+  googleId: { type: String, unique: true, sparse: true, required:false },
   name: { type: String, required: true },
   email: { type: String, unique: true, required: true },
   password: { type: String, required: true },
