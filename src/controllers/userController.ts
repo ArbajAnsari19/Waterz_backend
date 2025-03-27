@@ -186,7 +186,7 @@ export class userController {
     static async meSuperAgent(req: Request, res: Response): Promise<void> {
         try {
             const user = await UserprofileService.meSuperAgent(req.currentUser.id);
-            res.status(200).json({ message: 'meSuperAgent' });
+            res.status(200).json({ user });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }

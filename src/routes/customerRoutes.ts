@@ -11,7 +11,7 @@ router.get("/current/rides", authenticateToken,authenticateUser,userController.c
 router.get("/prev/rides", authenticateToken,authenticateUser,userController.customerAllPrevRides)
 router.get("/rides/:id", authenticateToken,authenticateUser,userController.customerPrevRidesId)
 router.get("/yatch-detail/:id",authenticateToken,authenticateUser, YatchController.detailYatch);
-router.get("/listAll",authenticateToken,authenticateUser, YatchController.listAll);
+router.get("/listAll", YatchController.listAll);
 router.post("/create/:id",authenticateToken,authenticateUser, BookingController.createBooking);
 router.post("/validatePromoCode",authenticateToken,authenticateUser, BookingController.validatePromocode);
 router.post("/idealYatchs", BookingController.serchIdealYatchs);
