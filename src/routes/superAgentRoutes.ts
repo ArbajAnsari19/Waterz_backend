@@ -7,6 +7,7 @@ const router = express.Router();
 
 
 router.get("/me", authenticateToken, authenticateSuperAgent,userController.meSuperAgent);
+router.post("/updateProfile",authenticateToken,authenticateSuperAgent, userController.updateSuperAgentProfile);
 router.get("/list-All-Yatchs", authenticateToken, authenticateSuperAgent,YatchController.listAll);
 router.post("/create-refferal", authenticateToken, authenticateSuperAgent,userController.agentnRefferal);
 router.get("/list-all-agent", authenticateToken, authenticateSuperAgent,userController.listAllAgent);

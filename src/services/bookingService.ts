@@ -329,6 +329,7 @@ class BookingService {
     
     // 7. Apply agent discount logic
     const agent = await Agent.findById(user);
+    if(agent?.isVerifiedByAdmin !== "accepted") throw new Error("Please contact Admin for your account Verification before booking");
     if (!agent) throw new Error("Agent not found");
     const agentDiscount = agent.commissionRate ?? 0;
     const yourComission = totalAmount * agentDiscount / 100;

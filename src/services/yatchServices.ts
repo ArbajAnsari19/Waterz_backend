@@ -110,7 +110,6 @@ class YatchService {
       try {
         const yatch = new Yacht({
             ...yatchDtails,
-            isVerifiedByAdmin: "requested",
             createdAt: new Date(),
             updatedAt: new Date(),
           });

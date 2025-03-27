@@ -4,7 +4,11 @@ import dotenv from "dotenv"
 import mongoose from "mongoose";
 import helmet from "helmet";
 import bodyParser from 'body-parser';
+import passport from "passport"
 import { customerRoutes,ownerRoutes, authRoutes,queryRoutes,paymentRoutes, adminRoutes, superAgentRoutes, agentRoutes }  from "./routes";
+import "./config/passport" 
+import session from 'express-session';
+
 
 
 dotenv.config()
@@ -14,11 +18,12 @@ app.use(bodyParser.json());
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
-  'http://wavezgoa.com',
-  'http://localhost:5173',
-  'https://wavezgoa.com',
   'http://www.wavezgoa.com',
   'https://www.wavezgoa.com',
+  'https://www.agent.wavezgoa.com',
+  'https://www.admin.wavezgoa.com',
+  'https://www.superagent.wavezgoa.com',
+  'https://www.owner.wavezgoa.com'
 ];
 const corsOptions = {
   origin: allowedOrigins,
@@ -32,6 +37,15 @@ app.use(cors(corsOptions));
 app.use(helmet());
 // app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 })); // Rate limiting
 app.use(express.urlencoded({ extended: true }));
+app.use(
+  session({
+    secret: process.env.JWT_SECRET!,
+    resave: false,
+    saveUninitialized: false
+  })
+)
+app.use(passport.initialize())
+app.use(passport.session())
 
 
 app.get("/test", (req, res) => {
@@ -66,4 +80,3 @@ app.listen(PORT, () => {
 });
 
 // Optimisation can be happend by populating bookings by Agent instead of Searching for all Booking and then finiding booking for Agent with superAgent.
- 
