@@ -23,12 +23,13 @@ export class BookingController {
                 PeopleNo: req.body.PeopleNo,
                 packages : req.body.packages,
                 addonServices: req.body.addonServices,
-                user: req.currentUser.id,
+                user: req.currentUser!.id,
                 promoCode: req.body.promoCode,
                 yacht: req.body.yacht,
                 YachtType: req.body.YachtType
             }
-            const role = req.currentUser.role;
+            const role = req.currentUser!.role;
+            // @ts-ignore
             const { booking, orderId,totalAmount,packageAmount,addonCost, gstAmount } = await BookingService.createBooking(BookingDetails,role);
             res.status(201).json({ message: 'Booking created successfully. Please complete the payment.', booking, orderId,totalAmount,packageAmount,addonCost, gstAmount });
         } catch (error) {
@@ -56,7 +57,7 @@ export class BookingController {
                 startTime: req.body.startTime,
                 location: req.body.location,
                 PeopleNo: req.body.PeopleNo,
-                user: req.currentUser.id,
+                user: req.currentUser!.id,
                 yacht: req.params.id,
                 packages: req.body.packages,
                 addonServices:req.body.addonServices,
@@ -64,8 +65,8 @@ export class BookingController {
                 customerPhone: req.body.customerPhone,
                 customerEmail: req.body.customerEmail
             }
-            const role = req.currentUser.role;
-
+            const role = req.currentUser!.role;
+            // @ts-ignore
             const { booking, orderId,totalAmount,packageAmount,addonCost, gstAmount,yourComission } = await BookingService.createAgentBooking(BookingDetails,role);
             res.status(201).json({ message: 'Booking created successfully. Please complete the payment.', booking, orderId,totalAmount,packageAmount,addonCost, gstAmount,yourComission });
         } catch (error) {
@@ -82,8 +83,9 @@ export class BookingController {
             console.log("bookingId", bookingId)
             const {totalAmount,razorpayId} = await BookingService.getBookingTotalandRazorPayId(bookingId);
             console.log("grandTotal", totalAmount) 
-            const userId = req.currentUser.id;
-            const role = req.currentUser.role;
+            const userId = req.currentUser!.id;
+            const role = req.currentUser!.role;
+            // @ts-ignore
             const { discount,discountType,newTotal,orderId } = await BookingService.validatePromocode(promoCode,userId,totalAmount,bookingId,role);
             res.status(200).json({ discount,discountType,newTotal,orderId });
         } catch (error) {
