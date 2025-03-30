@@ -69,7 +69,7 @@ const userSchema = new mongoose.Schema({
     enum: ['customer', 'owner', 'agent', 'super-agent', 'admin'],
     required: true 
   },
-  phone: { type: String, required: true },
+  phone: { type: String, required: false },
   otp: { type: String, required: false },
   otpExpiresAt: { type: Date, required: false },
   isVerified: { type: Boolean, default: false },

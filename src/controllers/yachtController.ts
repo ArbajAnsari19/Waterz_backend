@@ -36,7 +36,7 @@ export class YatchController {
 
   static async revenue(req: Request, res: Response): Promise<void> {
     try {
-      const owner = req.currentUser.id;
+      const owner = req.currentUser!.id;
       const earnings = await YatchService.revenue(owner);
       res.status(200).json(earnings);
     } catch (error) {
@@ -46,7 +46,7 @@ export class YatchController {
 
   static async revenueAgent(req: Request, res: Response): Promise<void> {
     try {
-      const agent = req.currentUser.id;
+      const agent = req.currentUser!.id;
       const earnings = await YatchService.revenueAgent(agent);
       console.log("Earnings", earnings);
       res.status(200).json(earnings);
@@ -116,7 +116,7 @@ export class YatchController {
               throw new Error('Invalid package type in list');
           }
       }
-          const owner = req.currentUser.id;
+          const owner = req.currentUser!.id;
           const yachtDetails = {
             owner,
             name,
@@ -136,7 +136,7 @@ export class YatchController {
             packageTypes,
             isVerifiedByAdmin: 'requested',
           };
-      
+      // @ts-ignore
           const { yachtId } = await YatchService.createYatch(yachtDetails);
           await UserService.addYachtToOwner(owner, yachtId);
         res.status(201).json({ message: 'Yatch created successfully', yachtId });
@@ -168,7 +168,7 @@ export class YatchController {
 
   static async listmyYatchs(req: Request, res: Response): Promise<void> {
     try {
-      const owner = req.currentUser.id;
+      const owner = req.currentUser!.id;
       const yachts = await YatchService.findYachtsByOwner(owner);
       res.status(200).json({"yachts" : yachts});
     } catch (error) {

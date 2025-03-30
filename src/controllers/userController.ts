@@ -59,7 +59,7 @@ export class userController {
     // customer
     static async meCustomer(req: Request, res: Response): Promise<void> {
         try {
-            const user = await UserprofileService.meCustomer(req.currentUser.id);
+            const user = await UserprofileService.meCustomer(req.currentUser!.id);
             res.status(200).json({ 'User-Details' : user });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
@@ -68,8 +68,19 @@ export class userController {
 
     static async customerAllCurrentRides(req: Request, res: Response): Promise<void> {
         try {
-            const AllCurrentRides = await UserprofileService.customerCurrentRides(req.currentUser.id);
+            const AllCurrentRides = await UserprofileService.customerCurrentRides(req.currentUser!.id);
             res.status(200).json({ "AllCurrentRides": AllCurrentRides });
+        } catch (error) {
+            res.status(500).json({ message: (error as Error).message });
+        }
+    }
+
+    static async updateProfile (req: Request, res: Response): Promise<void> {
+        try {
+            const userId = req.currentUser!.id;
+            const newPhone = req.body.phone;
+            const user = await UserprofileService.updatePhone(userId, newPhone);
+            res.status(200).json({ message: 'Profile Updated', user });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }
@@ -77,7 +88,7 @@ export class userController {
 
     static async customerAllPrevRides(req: Request, res: Response): Promise<void> {
         try {
-            const AllbookingRides = await UserprofileService.customerPrevRides(req.currentUser.id);
+            const AllbookingRides = await UserprofileService.customerPrevRides(req.currentUser!.id);
             res.status(200).json({ "AllBokingRides": AllbookingRides });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
@@ -87,7 +98,7 @@ export class userController {
     static async customerPrevRidesId(req: Request, res: Response): Promise<void> {
         try {
             const bookingId = req.params.id;
-            const prevRideData = await UserprofileService.customerPrevRidesId(req.currentUser.id,bookingId);
+            const prevRideData = await UserprofileService.customerPrevRidesId(req.currentUser!.id,bookingId);
             res.status(200).json({ "The details of this Ride are": prevRideData });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
@@ -97,7 +108,7 @@ export class userController {
     // owner
     static async meOwner(req: Request, res: Response): Promise<void> {
         try {
-            const user = await UserprofileService.meOwner(req.currentUser.id);
+            const user = await UserprofileService.meOwner(req.currentUser!.id);
             res.status(200).json({ message: 'meOwner' });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
@@ -106,7 +117,7 @@ export class userController {
 
     static async ownerPrevRides(req: Request, res: Response): Promise<void> {
         try {
-            const ownerPrevRides = await UserprofileService.ownerPrevRides(req.currentUser.id);
+            const ownerPrevRides = await UserprofileService.ownerPrevRides(req.currentUser!.id);
             res.status(200).json({ ownerPrevRides});
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
@@ -114,11 +125,11 @@ export class userController {
     }
 
     static async ownercurrentRides(req: Request, res: Response): Promise<void> {
-        console.log("here is req.currentUser.id",req.currentUser);
+        console.log("here is req.currentUser!.id",req.currentUser);
 
         try {
-            console.log("here is req.currentUser.id",req.currentUser.id);
-            const ownerCurrentRides = await UserprofileService.ownerCurrentRides(req.currentUser.id);
+            console.log("here is req.currentUser!.id",req.currentUser!.id);
+            const ownerCurrentRides = await UserprofileService.ownerCurrentRides(req.currentUser!.id);
             res.status(200).json({ownerCurrentRides});
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
@@ -128,7 +139,7 @@ export class userController {
     static async ownerPrevRidesId(req: Request, res: Response): Promise<void> { 
         try {
             const { id } = req.params;
-            const ownerPrevRidesId = await UserprofileService.ownerPrevRidesId(req.currentUser.id, id);
+            const ownerPrevRidesId = await UserprofileService.ownerPrevRidesId(req.currentUser!.id, id);
             res.status(200).json({ownerPrevRidesId});
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
@@ -137,7 +148,7 @@ export class userController {
     // agent 
     static async meAgent(req: Request, res: Response): Promise<void> {
         try {
-            const user = await UserprofileService.meAgent(req.currentUser.id);
+            const user = await UserprofileService.meAgent(req.currentUser!.id);
             res.status(200).json({ user });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
@@ -146,7 +157,7 @@ export class userController {
 
     static async agentAllCurrentRides(req: Request, res: Response): Promise<void> {
         try {
-            const AllCurrentRides = await UserprofileService.agentCurrentRides(req.currentUser.id);
+            const AllCurrentRides = await UserprofileService.agentCurrentRides(req.currentUser!.id);
             res.status(200).json({ "AllCurrentRides": AllCurrentRides });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
@@ -155,7 +166,7 @@ export class userController {
 
     static async agentAllPreviousRides(req: Request, res: Response): Promise<void> {
         try {
-            const AllbookingRides = await UserprofileService.agentPrevRides(req.currentUser.id);
+            const AllbookingRides = await UserprofileService.agentPrevRides(req.currentUser!.id);
             res.status(200).json({ "AllBokingRides": AllbookingRides });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
@@ -165,7 +176,7 @@ export class userController {
     static async agentPrevRidesId(req: Request, res: Response): Promise<void> {
         try {
             const bookingId = req.params.id;
-            const prevRideData = await UserprofileService.customerPrevRidesId(req.currentUser.id,bookingId);
+            const prevRideData = await UserprofileService.customerPrevRidesId(req.currentUser!.id,bookingId);
             res.status(200).json({ "The details of this Ride are": prevRideData });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
@@ -174,7 +185,7 @@ export class userController {
 
     static async updateAgentProfile(req: Request, res: Response): Promise<void> {
         try {
-            const userId = req.currentUser.id;
+            const userId = req.currentUser!.id;
             const updateDetails = req.body;
             const user = await UserprofileService.updateAgentProfile(userId, updateDetails);
             res.status(200).json({ message: 'Profile Updated', user });
@@ -186,7 +197,7 @@ export class userController {
     // superAgent
     static async meSuperAgent(req: Request, res: Response): Promise<void> {
         try {
-            const user = await UserprofileService.meSuperAgent(req.currentUser.id);
+            const user = await UserprofileService.meSuperAgent(req.currentUser!.id);
             res.status(200).json({ user });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
@@ -195,7 +206,7 @@ export class userController {
 
     static async agentnRefferal(req: Request, res: Response): Promise<void> {
         try {
-            const link = await UserprofileService.createRefferal(req.currentUser.id);
+            const link = await UserprofileService.createRefferal(req.currentUser!.id);
             res.status(200).json({ message: 'Agent Refferal link created :', link });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
@@ -204,7 +215,7 @@ export class userController {
     
     static async updateSuperAgentProfile(req: Request, res: Response): Promise<void> {
         try {
-            const userId = req.currentUser.id;
+            const userId = req.currentUser!.id;
             const updateDetails = req.body;
             const user = await UserprofileService.updateSuperAgentProfile(userId, updateDetails);
             res.status(200).json({ message: 'Profile Updated', user });
@@ -215,7 +226,7 @@ export class userController {
 
     static async listAllAgent(req: Request, res: Response): Promise<void> {
         try {
-            const allAgents = await UserprofileService.listAllAgent(req.currentUser.id);
+            const allAgents = await UserprofileService.listAllAgent(req.currentUser!.id);
             res.status(200).json({ allAgents });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
@@ -244,7 +255,7 @@ export class userController {
 
     static async listFilteredAgent(req: Request, res: Response): Promise<void> {
         try {
-             const userId = req.currentUser.id;
+             const userId = req.currentUser!.id;
             const filter : Filter = {
                 status:req.body.status,
                 agentWise:req.body.agentWise,
@@ -258,7 +269,7 @@ export class userController {
 
     static async listFilteredEarnings(req: Request, res: Response): Promise<void> {
         try {
-            const userId = req.currentUser.id;
+            const userId = req.currentUser!.id;
             const filter : Partial<EarningFilter> = {
                 agentWise:req.body.agentWise,
             } 

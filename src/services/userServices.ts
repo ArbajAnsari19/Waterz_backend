@@ -6,11 +6,12 @@ import dotenv from "dotenv";
 import {findRoleById} from "../utils/role";
 import Yacht, { IYacht } from "../models/Yacht";
 import Booking, {IBooking} from "../models/Booking"; 
-import { EarningFilter } from "../controllers/userController";
 import {AdminFilter,ApprovedDetails,agentCommission,superAgentCommission,AdminFilterBooking,AdminCustomerFilter,AdminSuperAgentFilter,AdminEarningFilter,AdminDashboardFilter} from "../controllers/userController";
 import {Promo,IPromo} from "../models/Promo";
 import Query from "../models/Query";
 import sgMail from '@sendgrid/mail';
+import SMSService from "./smsService";
+
 
 dotenv.config();
 const OTP_JWT_SECRET = process.env.OTP_JWT_SECRET as string;
@@ -73,6 +74,14 @@ interface AgentWithBookings {
 }
 
 class UserprofileService{
+
+  static async updatePhone(userId: string, newPhone: string): Promise<IUser | null> {
+    try {
+      return await User.findByIdAndUpdate(userId, { phone: newPhone }, { new: true });
+    } catch (error) {
+      throw new Error("Error updating phone number: " + (error as Error).message);
+    }
+  }
 
 // customer
   static async meCustomer(userId: string): Promise<IBooking[] | null> {
@@ -475,6 +484,10 @@ class UserService {
       });
       const savedUser = await user.save();
       await this.sendOTPEmail(savedUser.email, otp);
+      // // And send OTP via SMS if phone is provided:
+      // if (userData.phone) {
+      // await this.sendOTPSMS(userData.phone, otp);
+      // }
       const token = this.generateOtpToken(savedUser._id.toString(), savedUser.email);
       return { user: savedUser.toObject(), token };
     } catch (error) {
@@ -755,10 +768,19 @@ class UserService {
         subjectLine: 'Your OTP Code',
         contentBody: `Your OTP code is ${otp}. It will expire in 15 minutes.`,
       };
-
+      console.log(options);
       await EmailService.send(email, options);
     } catch (error) {
       throw new Error("Error sending OTP email: " + (error as Error).message);
+    }
+  }
+
+  static async sendOTPSMS(phone: string, otp: string): Promise<void> {
+    try {
+      await SMSService.send(phone, otp);
+      console.log(`OTP SMS sent successfully to: ${phone}`);
+    } catch (error) {
+      throw new Error("Error sending OTP SMS: " + (error as Error).message);
     }
   }
 
