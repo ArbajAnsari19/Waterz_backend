@@ -219,8 +219,9 @@ export class AuthController {
           finalUser = new User({ ...baseData });
       }
       
-      await finalUser.save();
       await User.findByIdAndDelete(tempUser._id); // Clean up temp user
+      await finalUser.save();
+
       
       const token = UserService.generateToken(finalUser._id.toString(), finalUser.email, finalUser.role);
       

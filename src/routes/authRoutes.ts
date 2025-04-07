@@ -36,45 +36,50 @@ router.get(
   }),
   async (req, res) => {
     try {
-      // The user is authenticated and available as req.user
       const user = req.user as any;
-      
-      // Check if phone number is missing (required field in schema)
+
+      // Check if phone is missing
       if (!user.phone) {
-        // Redirect to a page where they can complete their profile
-        // Include user ID so the frontend can update the profile later
         const tempToken = jwt.sign(
           { id: user._id, needsProfileUpdate: true },
           process.env.JWT_SECRET!,
           { expiresIn: "1h" }
         );
 
-        console.log("tempToken", tempToken);        
-        // Replace with your frontend URL for profile completion
-        // production
-        return res.redirect(`${process.env.FRONTEND_URL}/complete-profile?token=${tempToken}`);
+        // 👇 Detect frontend origin from request referer or fallback based on user email domain
+        const referer = req.headers.referer || "";
+        let redirectDomain = 'https://www.wavezgoa.com'; // default
 
-        // local
-        // return res.redirect(`http://localhost:5173/complete-profile?token=${tempToken}`);
+        if (referer.includes("agent")) {
+          redirectDomain = "https://www.agent.wavezgoa.com";
+        } else if (referer.includes("owner")) {
+          redirectDomain = "https://www.owner.wavezgoa.com";
+        } else if (referer.includes("superagent")) {
+          redirectDomain = "https://www.superagent.wavezgoa.com";
+        } else if (referer.includes("admin")) {
+          redirectDomain = "https://www.admin.wavezgoa.com";
+        }
 
+        console.log(`Redirecting to ${redirectDomain}/complete-profile`);
+
+        return res.redirect(`${redirectDomain}/complete-profile?token=${tempToken}`);
       }
-      
-      // Generate regular JWT token
+
+      // Generate auth token
       const token = jwt.sign(
         { id: user._id, email: user.email, role: user.role },
         process.env.JWT_SECRET!,
         { expiresIn: "7d" }
       );
-      
-      // Determine the redirect URL based on user role
-      let redirectUrl = process.env.FRONTEND_URL || 'http://localhost:5173'; // Default
-      
+
+      // Determine destination for auth-callback
+      let redirectUrl = 'https://www.wavezgoa.com'; // default
       switch (user.role) {
-        case 'owner':
-          redirectUrl = 'https://www.owner.wavezgoa.com';
-          break;
         case 'agent':
           redirectUrl = 'https://www.agent.wavezgoa.com';
+          break;
+        case 'owner':
+          redirectUrl = 'https://www.owner.wavezgoa.com';
           break;
         case 'super-agent':
           redirectUrl = 'https://www.superagent.wavezgoa.com';
@@ -83,14 +88,10 @@ router.get(
           redirectUrl = 'https://www.admin.wavezgoa.com';
           break;
         default:
-          redirectUrl = 'http://www.wavezgoa.com'; // Customer
+          redirectUrl = 'https://www.wavezgoa.com';
       }
-      
-      // // for local
-      // res.redirect(`http://localhost:5173/auth-callback?token=${token}`);
 
-      // for production
-      res.redirect(`${redirectUrl}/auth-callback?token=${token}`);
+      return res.redirect(`${redirectUrl}/auth-callback?token=${token}`);
     } catch (error) {
       console.error('Google auth callback error:', error);
       res.redirect('/auth/google/failed');
