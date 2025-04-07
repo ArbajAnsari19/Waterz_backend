@@ -25,11 +25,11 @@ passport.deserializeUser(async (id: string, done) => {
     }
 });
 
-console.log("Google OAuth configuration:", {
-    clientID: process.env.GOOGLE_CLIENT_ID?.substring(0, 10) + "...", // Show just first few chars for security
-    callbackURL: process.env.GOOGLE_CALLBACK_URL,
-    redirectPath: "/auth/google/callback"
-  });
+// console.log("Google OAuth configuration:", {
+//     clientID: process.env.GOOGLE_CLIENT_ID?.substring(0, 10) + "...", // Show just first few chars for security
+//     callbackURL: process.env.GOOGLE_CALLBACK_URL,
+//     redirectPath: "/auth/google/callback"
+//   });
 
 passport.use(
     new GoogleStrategy(
