@@ -17,5 +17,6 @@ router.delete("/remove-agent/:id", authenticateToken, authenticateSuperAgent,use
 router.post("/list-filtered-agent", authenticateToken, authenticateSuperAgent,userController.listFilteredAgent);
 router.post("/list-filtered-earnings", authenticateToken, authenticateSuperAgent,userController.listFilteredEarnings);
 router.get("/topYatch",YatchController.topYatch)
+router.get("/listAll", YatchController.listAll);
 
 export default router;
