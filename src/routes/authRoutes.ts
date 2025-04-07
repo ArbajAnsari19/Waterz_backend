@@ -48,6 +48,7 @@ router.get(
 
         // 👇 Detect frontend origin from request referer or fallback based on user email domain
         const referer = req.headers.referer || "";
+        console.log("referer", referer);
         let redirectDomain = 'https://www.wavezgoa.com'; // default
 
         if (referer.includes("agent")) {
