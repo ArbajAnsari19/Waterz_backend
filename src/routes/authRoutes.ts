@@ -51,8 +51,11 @@ router.get(
 
         console.log("tempToken", tempToken);        
         // Replace with your frontend URL for profile completion
-        // return res.redirect(`${process.env.FRONTEND_URL}/complete-profile?token=${tempToken}`);
-        return res.redirect(`http://localhost:5173/complete-profile?token=${tempToken}`);
+        // production
+        return res.redirect(`${process.env.FRONTEND_URL}/complete-profile?token=${tempToken}`);
+
+        // local
+        // return res.redirect(`http://localhost:5173/complete-profile?token=${tempToken}`);
 
       }
       
