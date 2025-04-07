@@ -29,8 +29,10 @@ router.post('/reset-password', AuthController.resetPassword);
 
 router.get("/google", (req, res, next) => {
   // @ts-ignore
+  console.log("Full request URL:", req.originalUrl);
   const redirectUri = req.query.redirect_uri as string || "https://www.wavezgoa.com";
-  
+
+  console.log("redirect url", req.query.redirect_uri);
   // Store redirectUri in Google OAuth `state`
   passport.authenticate("google", {
     scope: ["profile", "email"],
@@ -39,6 +41,78 @@ router.get("/google", (req, res, next) => {
 });
 
 // Google callback route with enhanced error handling and role-based redirects
+// router.get(
+//   "/google/callback",
+//   passport.authenticate("google", { 
+//     failureRedirect: "/auth/google/failed",
+//     session: false,
+//   }),
+//   async (req, res) => {
+//     try {
+//       const user = req.user as any;
+//       const redirectUri = req.query.redirect_uri as string || "https://www.wavezgoa.com";
+//       console.log("redirect url", redirectUri)
+//       // Check if phone is missing
+//       if (!user.phone) {
+//         const tempToken = jwt.sign(
+//           { id: user._id, needsProfileUpdate: true },
+//           process.env.JWT_SECRET!,
+//           { expiresIn: "1h" }
+//         );
+
+//         // // 👇 Detect frontend origin from request referer or fallback based on user email domain
+//         // const referer = req.headers.referer || "";
+//         // let redirectDomain = 'https://www.wavezgoa.com'; // default
+
+//         // if (referer.includes("agent")) {
+//         //   redirectDomain = "https://www.agent.wavezgoa.com";
+//         // } else if (referer.includes("owner")) {
+//         //   redirectDomain = "https://www.owner.wavezgoa.com";
+//         // } else if (referer.includes("superagent")) {
+//         //   redirectDomain = "https://www.superagent.wavezgoa.com";
+//         // } else if (referer.includes("admin")) {
+//         //   redirectDomain = "https://www.admin.wavezgoa.com";
+//         // }
+
+//         console.log(`Redirecting to ${redirectUri}/complete-profile`);
+
+//         return res.redirect(`${redirectUri}/complete-profile?token=${tempToken}`);
+//       }
+
+//       // Generate auth token
+//       const token = jwt.sign(
+//         { id: user._id, email: user.email, role: user.role },
+//         process.env.JWT_SECRET!,
+//         { expiresIn: "7d" }
+//       );
+
+//       // Determine destination for auth-callback
+//       let redirectUrl = 'https://www.wavezgoa.com'; // default
+//       switch (user.role) {
+//         case 'agent':
+//           redirectUrl = 'https://www.agent.wavezgoa.com';
+//           break;
+//         case 'owner':
+//           redirectUrl = 'https://www.owner.wavezgoa.com';
+//           break;
+//         case 'super-agent':
+//           redirectUrl = 'https://www.superagent.wavezgoa.com';
+//           break;
+//         case 'admin':
+//           redirectUrl = 'https://www.admin.wavezgoa.com';
+//           break;
+//         default:
+//           redirectUrl = 'https://www.wavezgoa.com';
+//       }
+
+//       return res.redirect(`${redirectUrl}/auth-callback?token=${token}`);
+//     } catch (error) {
+//       console.error('Google auth callback error:', error);
+//       res.redirect('/auth/google/failed');
+//     }
+//   }
+// );
+
 router.get(
   "/google/callback",
   passport.authenticate("google", { 
@@ -48,9 +122,15 @@ router.get(
   async (req, res) => {
     try {
       const user = req.user as any;
-      const redirectUri = req.query.redirect_uri as string || "https://www.wavezgoa.com";
-      console.log("redirect url", redirectUri)
-      // Check if phone is missing
+      
+      // Extract redirectUri from state parameter
+      const state = req.query.state as string;
+      console.log("state", state);
+      const redirectUri = state || "https://www.wavezgoa.com";
+      
+      console.log("redirect url from state", redirectUri);
+      
+      // Rest of your code remains the same
       if (!user.phone) {
         const tempToken = jwt.sign(
           { id: user._id, needsProfileUpdate: true },
@@ -58,22 +138,7 @@ router.get(
           { expiresIn: "1h" }
         );
 
-        // // 👇 Detect frontend origin from request referer or fallback based on user email domain
-        // const referer = req.headers.referer || "";
-        // let redirectDomain = 'https://www.wavezgoa.com'; // default
-
-        // if (referer.includes("agent")) {
-        //   redirectDomain = "https://www.agent.wavezgoa.com";
-        // } else if (referer.includes("owner")) {
-        //   redirectDomain = "https://www.owner.wavezgoa.com";
-        // } else if (referer.includes("superagent")) {
-        //   redirectDomain = "https://www.superagent.wavezgoa.com";
-        // } else if (referer.includes("admin")) {
-        //   redirectDomain = "https://www.admin.wavezgoa.com";
-        // }
-
         console.log(`Redirecting to ${redirectUri}/complete-profile`);
-
         return res.redirect(`${redirectUri}/complete-profile?token=${tempToken}`);
       }
 
@@ -84,26 +149,8 @@ router.get(
         { expiresIn: "7d" }
       );
 
-      // Determine destination for auth-callback
-      let redirectUrl = 'https://www.wavezgoa.com'; // default
-      switch (user.role) {
-        case 'agent':
-          redirectUrl = 'https://www.agent.wavezgoa.com';
-          break;
-        case 'owner':
-          redirectUrl = 'https://www.owner.wavezgoa.com';
-          break;
-        case 'super-agent':
-          redirectUrl = 'https://www.superagent.wavezgoa.com';
-          break;
-        case 'admin':
-          redirectUrl = 'https://www.admin.wavezgoa.com';
-          break;
-        default:
-          redirectUrl = 'https://www.wavezgoa.com';
-      }
-
-      return res.redirect(`${redirectUrl}/auth-callback?token=${token}`);
+      // Use the redirectUri from state instead of role-based routing
+      return res.redirect(`${redirectUri}/auth-callback?token=${token}`);
     } catch (error) {
       console.error('Google auth callback error:', error);
       res.redirect('/auth/google/failed');
