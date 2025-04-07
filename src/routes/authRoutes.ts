@@ -20,12 +20,23 @@ router.post('/forgot-password', AuthController.forgotPassword);
 router.post('/reset-password', AuthController.resetPassword);
 
 // Google OAuth Routes
-router.get(
-  "/google",
+// router.get(
+//   "/google",
+//   passport.authenticate("google", {
+//     scope: ["profile", "email"]
+//   })
+// );
+
+router.get("/google", (req, res, next) => {
+  // @ts-ignore
+  const redirectUri = req.query.redirect_uri as string || "https://www.wavezgoa.com";
+  
+  // Store redirectUri in Google OAuth `state`
   passport.authenticate("google", {
-    scope: ["profile", "email"]
-  })
-);
+    scope: ["profile", "email"],
+    state: redirectUri
+  })(req, res, next);
+});
 
 // Google callback route with enhanced error handling and role-based redirects
 router.get(
@@ -37,7 +48,8 @@ router.get(
   async (req, res) => {
     try {
       const user = req.user as any;
-
+      const redirectUri = req.query.redirect_uri as string || "https://www.wavezgoa.com";
+      console.log("redirect url", redirectUri)
       // Check if phone is missing
       if (!user.phone) {
         const tempToken = jwt.sign(
@@ -46,23 +58,23 @@ router.get(
           { expiresIn: "1h" }
         );
 
-        // 👇 Detect frontend origin from request referer or fallback based on user email domain
-        const referer = req.headers.referer || "";
-        let redirectDomain = 'https://www.wavezgoa.com'; // default
+        // // 👇 Detect frontend origin from request referer or fallback based on user email domain
+        // const referer = req.headers.referer || "";
+        // let redirectDomain = 'https://www.wavezgoa.com'; // default
 
-        if (referer.includes("agent")) {
-          redirectDomain = "https://www.agent.wavezgoa.com";
-        } else if (referer.includes("owner")) {
-          redirectDomain = "https://www.owner.wavezgoa.com";
-        } else if (referer.includes("superagent")) {
-          redirectDomain = "https://www.superagent.wavezgoa.com";
-        } else if (referer.includes("admin")) {
-          redirectDomain = "https://www.admin.wavezgoa.com";
-        }
+        // if (referer.includes("agent")) {
+        //   redirectDomain = "https://www.agent.wavezgoa.com";
+        // } else if (referer.includes("owner")) {
+        //   redirectDomain = "https://www.owner.wavezgoa.com";
+        // } else if (referer.includes("superagent")) {
+        //   redirectDomain = "https://www.superagent.wavezgoa.com";
+        // } else if (referer.includes("admin")) {
+        //   redirectDomain = "https://www.admin.wavezgoa.com";
+        // }
 
-        console.log(`Redirecting to ${redirectDomain}/complete-profile`);
+        console.log(`Redirecting to ${redirectUri}/complete-profile`);
 
-        return res.redirect(`${redirectDomain}/complete-profile?token=${tempToken}`);
+        return res.redirect(`${redirectUri}/complete-profile?token=${tempToken}`);
       }
 
       // Generate auth token
