@@ -83,7 +83,10 @@ router.get(
           redirectUrl = 'http://www.wavezgoa.com'; // Customer
       }
       
-      // Redirect with token
+      // // for local
+      // res.redirect(`http://localhost:5173/auth-callback?token=${token}`);
+
+      // for production
       res.redirect(`${redirectUrl}/auth-callback?token=${token}`);
     } catch (error) {
       console.error('Google auth callback error:', error);
@@ -105,52 +108,7 @@ router.get("/logout", (req, res) => {
   });
 });
 
-// Update user profile (useful for Google auth users who need to complete profile)
-router.post('/update-profile', authenticateToken, async (req, res): Promise<void> => {
-  try {
-    // @ts-ignore
-    const userId = req.user?.id;
-    const { phone } = req.body;
-    
-    if (!phone) {
-      res.status(400).json({ success: false, message: "Phone number is required" });
-      return;
-    }
-    
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { phone },
-      { new: true }
-    );
-    
-    if (!user) {
-      res.status(404).json({ success: false, message: "User not found" });
-      return;
-    }
-    
-    // Generate a new token after successful profile update
-    const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET!,
-      { expiresIn: "7d" }
-    );
-    
-    res.status(200).json({
-      success: true,
-      message: "Profile updated successfully",
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    console.error('Profile update error:', error);
-    res.status(500).json({ success: false, message: "Failed to update profile" });
-  }
-});
+router.post('/complete-profile', authenticateToken, AuthController.completeGoogleProfile)
 
 export default router;
 

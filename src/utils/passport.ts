@@ -1,7 +1,7 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy, Profile } from 'passport-google-oauth20';
 import { Request } from 'express';
-import User, { IUser } from '../models/User';
+import  User, {  Agent, IAgent, IOwner, IUser, Owner, IAdmin, ISuperAgent,SuperAgent, Admin  }  from "../models/User";
 import { hashPassword } from './auth';
 import crypto from 'crypto';
 
@@ -13,7 +13,12 @@ passport.serializeUser((user: any, done) => {
 // Deserialize user from the session
 passport.deserializeUser(async (id: string, done) => {
     try {
-        const user = await User.findById(id);
+        const user = 
+        await Agent.findById(id) ||
+        await Owner.findById(id) ||
+        await SuperAgent.findById(id) ||
+        await Admin.findById(id) ||
+        await User.findById(id);
         done(null, user);
     } catch (error) {
         done(error, null);
@@ -43,7 +48,14 @@ passport.use(
         ) => {
             try {
                 // Check if user exists based on googleId
-                let user = await User.findOne({ googleId: profile.id });
+                // console.log("profile", profile);
+                // console.log("req", req)
+                let user = 
+                await Agent.findOne({ googleId: profile.id }) ||
+                await Owner.findOne({ googleId: profile.id }) ||
+                await SuperAgent.findOne({ googleId: profile.id }) ||
+                await Admin.findOne({ googleId: profile.id }) ||
+                await User.findOne({ googleId: profile.id });
 
                 if (user) {
                     return done(null, user);
@@ -53,7 +65,12 @@ passport.use(
                 const email = profile.emails && profile.emails[0] ? profile.emails[0].value : '';
                 
                 if (email) {
-                    user = await User.findOne({ email });
+                    user = 
+                    await Agent.findOne({ email }) ||
+                    await Owner.findOne({ email }) ||
+                    await SuperAgent.findOne({ email }) ||
+                    await Admin.findOne({ email }) ||
+                    await User.findOne({ email });
                     
                     if (user) {
                         // If user exists with this email, update with googleId

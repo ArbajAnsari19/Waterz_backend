@@ -7,7 +7,7 @@ import { BookingController } from "../controllers/bookingController";
 const router = express.Router();
 
 router.get("/me", authenticateToken,authenticateUser, userController.meCustomer)
-router.get("/profile/update", authenticateToken,authenticateUser, userController.updateProfile)
+router.post("/profile/update", authenticateToken,authenticateUser, userController.updateProfile)
 router.get("/current/rides", authenticateToken,authenticateUser,userController.customerAllCurrentRides)
 router.get("/prev/rides", authenticateToken,authenticateUser,userController.customerAllPrevRides)
 router.get("/rides/:id", authenticateToken,authenticateUser,userController.customerPrevRidesId)

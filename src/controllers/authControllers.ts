@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import UserService from '../services/userServices';
 import jwt from 'jsonwebtoken';
-import User from '../models/User';
+import  User, {  Agent, IAgent, IOwner, IUser, Owner, IAdmin, ISuperAgent,SuperAgent, Admin  }  from "../models/User";
 import { hashPassword } from '../utils/auth';
 
 export class AuthController {
@@ -155,7 +155,8 @@ export class AuthController {
 
   static async completeGoogleProfile(req: Request, res: Response): Promise<void> {
     try {
-      const { phone, role = 'customer' } = req.body;
+      const { phone, role } = req.body;
+      console.log("bodyy", req.body);
       
       if (!req.currentUser || !req.currentUser.id) {
         res.status(401).json({ 
@@ -173,38 +174,68 @@ export class AuthController {
         return;
       }
       
-      // Update the user with the provided phone number and role
-      const user = await User.findByIdAndUpdate(
-        req.currentUser.id,
-        { 
-          phone,
-          role,
-          isVerified: true // Google users are already verified
-        },
-        { new: true }
-      );
-      
-      if (!user) {
-        res.status(404).json({ 
-          success: false, 
-          message: 'User not found' 
-        });
+      const tempUser = await User.findById(req.currentUser.id);
+      console.log("tempUser", tempUser);
+      if (!tempUser) {
+        res.status(404).json({ success: false, message: "Temp user not found" });
         return;
       }
       
-      // Generate a token for the completed profile
-      const token = UserService.generateToken(user._id.toString(), user.email, user.role);
+      const baseData = {
+        googleId: tempUser.googleId,
+        email: tempUser.email,
+        name: tempUser.name,
+        phone,
+        password: tempUser.password, // random one from earlier
+        isVerified: true,
+        role,
+      };
       
+      let finalUser;
+      switch (role) {
+        case 'agent':
+          finalUser = new Agent({
+            ...baseData,
+            commissionRate: 0,
+            isVerifiedByAdmin: 'requested',
+          });
+          break;
+        case 'owner':
+          finalUser = new Owner({
+            ...baseData,
+            yachts: [],
+          });
+          break;
+        case 'super-agent':
+          finalUser = new SuperAgent({
+            ...baseData,
+            referralCode: `${tempUser.name.substring(0, 3).toUpperCase()}-${Math.random().toString(36).substring(2, 8)}`
+          });
+          break;
+        case 'admin':
+          finalUser = new Admin({ ...baseData });
+          break;
+        default:
+          finalUser = new User({ ...baseData });
+      }
+      
+      await finalUser.save();
+      await User.findByIdAndDelete(tempUser._id); // Clean up temp user
+      
+      const token = UserService.generateToken(finalUser._id.toString(), finalUser.email, finalUser.role);
+      
+      
+ 
       res.status(200).json({
         success: true,
         message: 'Profile completed successfully',
         token,
         user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          phone: user.phone
+          id: finalUser._id,
+          name: finalUser.name,
+          email: finalUser.email,
+          role: finalUser.role,
+          phone: finalUser.phone
         }
       });
     } catch (error) {

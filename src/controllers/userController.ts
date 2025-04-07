@@ -60,7 +60,7 @@ export class userController {
     static async meCustomer(req: Request, res: Response): Promise<void> {
         try {
             const user = await UserprofileService.meCustomer(req.currentUser!.id);
-            res.status(200).json({ 'User-Details' : user });
+            res.status(200).json({ 'user' : user });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }
@@ -76,8 +76,11 @@ export class userController {
     }
 
     static async updateProfile (req: Request, res: Response): Promise<void> {
+        console.log("reached");
         try {
+            console.log("req.currentUser",req.currentUser);
             const userId = req.currentUser!.id;
+            console.log("req.currentUser",req.currentUser);
             const newPhone = req.body.phone;
             const user = await UserprofileService.updatePhone(userId, newPhone);
             res.status(200).json({ message: 'Profile Updated', user });
@@ -109,7 +112,7 @@ export class userController {
     static async meOwner(req: Request, res: Response): Promise<void> {
         try {
             const user = await UserprofileService.meOwner(req.currentUser!.id);
-            res.status(200).json({ message: 'meOwner' });
+            res.status(200).json({ user });
         } catch (error) {
             res.status(500).json({ message: (error as Error).message });
         }
